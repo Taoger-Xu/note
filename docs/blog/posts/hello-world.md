@@ -1,6 +1,6 @@
 ---
 authors:
-    - xujintao
+    - taoger
 categories:
     - Lab
     - OS
