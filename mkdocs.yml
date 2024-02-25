@@ -1,3 +1,57 @@
-site_name: My Docs
+# Project information
+site_name: Jintaoxu's Page
+site_url: https://taoger-xu.github.io/note/
+site_author: Jintao Xu
+
+# Repository
+repo_name: note
+repo_url: https://github.com/Taoger-Xu/note
+
 theme:
   name: material
+  font:
+    text: LXGW WenKai Screen  
+  favicon: icons/cat.svg
+  icon:
+    repo: fontawesome/brands/github-alt # the github cat icon in the topright
+    logo: material/cat # the cat icon in the topleft
+  features:
+    # - navigation.prune
+    - navigation.tracking
+    - navigation.instant # optimize loading
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - navigation.expand
+    - content.code.copy # enable the button to copy the code block
+    
+plugins:
+  - blog:
+    post_date_format: medium
+    post_excerpt: required
+    post_url_format: "{date}/{slug}"
+    blog_toc: true
+    
+
+
+
+extra_css:
+  - css/extra.css
+  - https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css
+extra_javascript:
+  - js/extra.js
+  - js/tablesort.js
+  - js/mathjax.js
+
+nav:
+  - Home:
+      - index.md
+  - Blog:
+      - blog/index.md
+
+  - Course:
+      - course/index.md
+      - CMU 15-213:
+        - Lab1:course/cmu15-213/lab1.md
+  - Paper:
+      - paper/index.md
