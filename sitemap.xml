@@ -1,3 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://taoger-xu.github.io/note/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/course/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/course/cmu15-213/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/course/cmu15-213/lab1/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/papper/</loc>
+         <lastmod>2024-02-25</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
 </urlset>
