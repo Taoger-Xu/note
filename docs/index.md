@@ -1,19 +1,48 @@
-# Welcome to MkDocs
+---
+nostatistics: true
+hide:
+  - navigation
+  - toc
+---
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+# （ ๑> ؂ < ） Hi!
 
-## Commands
+欢迎来到我的主页！
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+# 样式一览
+!!! abstraction
+    此页面将会列出本站点目前支持的所有显示样式，借鉴于[note](https://stormckey.github.io/Format/)
 
-## Project layout
+- 代码片段
+```cpp
+#include<iostream>
+int main()
+{
+    std::cout << "hello, world" << std::endl;
+    return 0;
+}
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
-## Test
-try GitHub action
+- 文字片段
+!!! note
+    Search for emojis [here](https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/)
+
+!!! Definition
+    Define sth
+
+- ==This was marked==
+- ^^This was inserted^^
+- ~~This was deleted~~
+
+- 任务列表
+- [x] Lab1
+- [ ] Lab2
+    * [x] demo1
+    * [x] demo2
+    * [ ] demo3
+- [ ] Lab3
+
+- latex
+$$
+\operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}
+$$
