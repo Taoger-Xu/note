@@ -11,6 +11,8 @@ theme:
   name: material
   font:
     text: LXGW WenKai Screen  
+    code: Monaspace Krypton
+
   favicon: icons/cat.svg
   icon:
     repo: fontawesome/brands/github-alt # the github cat icon in the topright
@@ -24,6 +26,10 @@ theme:
     - navigation.top
     - navigation.expand
     - content.code.copy # enable the button to copy the code block
+    - search.suggest # auto suggestion
+    - search.highlight # highlight when search
+    - search.share # enable share when search
+    - toc.follow # the sidebar will scroll automatically following the user
     
 plugins:
   - search
@@ -53,7 +59,65 @@ extra_javascript:
   - js/extra.js
   - js/tablesort.js
   - js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js # enable table sort
+markdown_extensions:
+  #enable admonition
+  - admonition
+  - pymdownx.details # enable ??? admonition
+  - pymdownx.betterem # better emphasize
+  - pymdownx.superfences: # allow nest codes
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format:
+            !!python/name:pymdownx.superfences.fence_code_format #enable code config
 
+
+  - pymdownx.inlinehilite #inline code highlight
+  - pymdownx.snippets #enable to embed arbitrary files
+  - pymdownx.highlight:
+      linenums: true # enable line display
+      line_spans: __span
+      pygments_lang_class: true # detect language automatically
+      anchor_linenums: true # offer line anchor
+  - pymdownx.keys # render key symbols
+  - pymdownx.smartsymbols
+  #enable button
+  - attr_list
+  #enable content tabs
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  #daigrams are not enabled
+  - footnotes
+  #enable emoji
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator:
+        !!python/name:material.extensions.emoji.to_svg #image alignment
+
+
+  - md_in_html
+  #better list
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  #abbr
+  - abbr
+  #enable math syntax
+  - pymdownx.arithmatex:
+      generic: true
+  #enable table of content
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section for reference
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.critic
+  
 nav:
   - Home:
       - index.md
