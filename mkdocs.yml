@@ -26,15 +26,26 @@ theme:
     - content.code.copy # enable the button to copy the code block
     
 plugins:
+  - search
+  - meta-manager:
+      merge_tags: true
+  # - social: #social card
+  #     enabled: !ENV [CI, false]
+  #     cards: !ENV [CI, false]
+  #     cards_font: Noto Sans SC
+  - git-revision-date-localized:
+      enable_creation_date: true
+      enabled: !ENV [CI, false]
+  - offline: # enable searching offline
+      enabled: !ENV [OFFLINE, false]
+  - glightbox
   - blog:
-    post_date_format: medium
-    post_excerpt: required
-    post_url_format: "{date}/{slug}"
-    blog_toc: true
+      post_url_format: "{slug}"
+      blog_toc: true
+      post_date_format: medium
+      post_excerpt: required
+      post_readtime_words_per_minute: 150
     
-
-
-
 extra_css:
   - css/extra.css
   - https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css
@@ -52,6 +63,6 @@ nav:
   - Course:
       - course/index.md
       - CMU 15-213:
-        - Lab1:course/cmu15-213/lab1.md
+        - Lab1: course/cmu15-213/lab1.md
   - Paper:
       - paper/index.md
