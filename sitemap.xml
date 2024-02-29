@@ -2,52 +2,112 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://taoger-xu.github.io/note/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/blog/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/cuda-synchronization/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/c%E8%AF%AD%E8%A8%80%E6%8B%BE%E9%81%97/</loc>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/blog/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F---lab2-%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/%E4%B8%80%E7%94%9F%E4%B8%80%E8%8A%AF/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F--%E8%99%9A%E6%8B%9F%E5%8C%96/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/</loc>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/course/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/course/cmu15-213/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/course/cmu15-213/lab1/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/papper/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/archive/2024/</loc>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/blog/archive/2023/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/blog/category/lab/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://taoger-xu.github.io/note/blog/category/os/</loc>
-         <lastmod>2024-02-25</lastmod>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/ysyx/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/ics/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/jyy/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/c/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/cuda/</loc>
+         <lastmod>2024-02-29</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://taoger-xu.github.io/note/blog/category/gpu/</loc>
+         <lastmod>2024-02-29</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
