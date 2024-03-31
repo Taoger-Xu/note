@@ -127,6 +127,17 @@ nav:
   - Course:
       - course/index.md
       - CMU 15-213:
-        - Lab1: course/cmu15-213/lab1.md
+        - course/cmu15-213/index.md
+        - Lab: course/cmu15-213/lab.md
+        - Lec: course/cmu15-213/lec.md
+      - cs61a:
+        - course/cs61a/index.md
+        - Lab: course/cs61a/lab.md
+        - Project: course/cs61a/project.md
+        - Lec: course/cs61a/lec.md
+      - cs 106L:
+        - course/cs106L/index.md
+        - Lab: course/cs106L/lab.md
+        - Lec: course/cs106L/lec.md
   - Paper:
       - paper/index.md
