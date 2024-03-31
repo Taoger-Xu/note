@@ -5,6 +5,7 @@ categories:
     - Memory Consistency
     - Cache Coherence
     - Multi-GPU
+    - HPCA
 date: 2024-03-31
 nostatistics: true
 ---

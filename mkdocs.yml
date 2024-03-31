@@ -47,7 +47,6 @@ plugins:
       enabled: !ENV [OFFLINE, false]
   - glightbox
   - blog:
-      blog_dir: paper
       post_url_format: "{slug}"
       blog_toc: true
       post_date_format: medium
@@ -143,3 +142,5 @@ nav:
         - Lec: course/cs106L/lec.md
   - Paper:
       - paper/index.md
+      - 2024:
+        - hmg.md
