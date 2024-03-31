@@ -24,7 +24,8 @@ theme:
     - navigation.tabs
     - navigation.indexes
     - navigation.top
-    - navigation.expand
+    - content.action.edit # enable the button to edit the source code of the page
+    - content.action.view # enable the button to view the source code of the page
     - content.code.copy # enable the button to copy the code block
     - search.suggest # auto suggestion
     - search.highlight # highlight when search
