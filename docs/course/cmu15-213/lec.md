@@ -10,13 +10,13 @@ nostatistics: true
 
 ## Ch2
 
-### ÕûÊýÔËËã
+### æ•´æ•°è¿ç®—
 
-- ²¹Âë±íÊ¾£ºµ±`x`ÊÇ`Tmin`µÄÊ±ºò£¬$x$
+- è¡¥ç è¡¨ç¤ºï¼šå½“`x`æ˜¯`Tmin`çš„æ—¶å€™ï¼Œ$x$
 
-### ¸¡µãÊý: IEEE 754
+### æµ®ç‚¹æ•°: IEEE 754
 
--  IEEE 754 ¸¡µã±íÊ¾
+-  IEEE 754 æµ®ç‚¹è¡¨ç¤º
 
 <img src="assets/image-20240303132555032.png" style="zoom:50%;" />
 
@@ -24,13 +24,13 @@ nostatistics: true
 
 
 
-- ¸¡µãÊý·ÖÀà
+- æµ®ç‚¹æ•°åˆ†ç±»
 
 <img src="assets/image-20240303131426978.png" style="zoom:50%;" />
 
-- ¸¡µãÊý±íÊ¾ÃÜ¶È
+- æµ®ç‚¹æ•°è¡¨ç¤ºå¯†åº¦
 
-¸¡µãÊýµÄ±íÊ¾´ó²¿·Ö¶¼¼¯ÖÐÔÚ0µÄ¸½½ü£¬¿ÉÒÔÍ¨¹ýÏÂÃæµÄ´úÂë·¢ÏÖ£¬³öÏÖÔÚ`[-1,1]`Çø¼äµÄ`95%`¶¼³öÏÖÔÚÇø¼ä`[-0.5,0.5]`Ö®¼ä£¬ËµÃ÷754±íÊ¾½ÏÐ¡µÄÊýÊ±½ÏÎª¾«È·£¬Ô½´óµÄÊý×Ö£¬¾àÀëÏÂÒ»¸öÊµÊýµÄ¾àÀë¾ÍÔ½´ó
+æµ®ç‚¹æ•°çš„è¡¨ç¤ºå¤§éƒ¨åˆ†éƒ½é›†ä¸­åœ¨0çš„é™„è¿‘ï¼Œå¯ä»¥é€šè¿‡ä¸‹é¢çš„ä»£ç å‘çŽ°ï¼Œå‡ºçŽ°åœ¨`[-1,1]`åŒºé—´çš„`95%`éƒ½å‡ºçŽ°åœ¨åŒºé—´`[-0.5,0.5]`ä¹‹é—´ï¼Œè¯´æ˜Ž754è¡¨ç¤ºè¾ƒå°çš„æ•°æ—¶è¾ƒä¸ºç²¾ç¡®ï¼Œè¶Šå¤§çš„æ•°å­—ï¼Œè·ç¦»ä¸‹ä¸€ä¸ªå®žæ•°çš„è·ç¦»å°±è¶Šå¤§
 
 ```c
 #include <math.h>
@@ -74,11 +74,11 @@ int main()
 ```
 
 <figure markdown>
-  ![Image title](https://dummyimage.com/600x400/){ width="300" }
+  ![Image title](assets/image-20240303135256402.png){ width="300" }
   <figcaption>Image caption</figcaption>
 </figure>
 
-<img src="assets/image-20240303135256402.png" style="zoom:33%;" />
-
-<img src="assets/image-20240303135813726.png" alt="59%" style="zoom:50%;" />
-
+<figure markdown>
+  ![Image title](assets/image-20240303135813726.png){ width="300" }
+  <figcaption>Image caption</figcaption>
+</figure>

@@ -1,47 +1,157 @@
 ---
-nostatistics: true
+comments: true
 hide:
   - navigation
   - toc
 ---
-
-# £¨ ?> ? < £© Hi!
-
-»¶Ó­À´µ½JintaoµÄ²©¿Í£¬ÏÂÃæÊÇ²©¿ÍÑùÊ½Ò»ÀÀ
-
-# ÑùÊ½Ò»ÀÀ
+# æ ·å¼ä¸€è§ˆ
 !!! abstraction
-    ´ËÒ³Ãæ½«»áÁĞ³ö±¾Õ¾µãÄ¿Ç°Ö§³ÖµÄËùÓĞÏÔÊ¾ÑùÊ½
-    Ğí¶à¶¼À´×Ô[:octicons-link-16: Material for Mkdocs](https://squidfunk.github.io/mkdocs-material/)
+    æ­¤é¡µé¢å°†ä¼šåˆ—å‡ºæœ¬ç«™ç‚¹ç›®å‰æ”¯æŒçš„æ‰€æœ‰æ˜¾ç¤ºæ ·å¼
+    è®¸å¤šéƒ½æ¥è‡ª[:octicons-link-16: Material for Mkdocs](https://squidfunk.github.io/mkdocs-material/)
 
-- ´úÂë
-```cpp
-#include<iostream>
-int main()
-{
-    std::cout << "hello, world" << std::endl;
-    return 0;
+```C hl_lines="2 2"
+int main(){
+    printf("Hello World");
+    printf("!/n");
 }
 ```
 
-- ÌáÊ¾¿ò
+```C++
+#include <iostream>
+using namespace std;
+```
+
+The `#!python range()` function is used to generate a sequence of numbers.
+
+``` title="inlcude a file: .gitignore"
+--8<-- ".gitignore"
+```
+
+{{ read_csv('./data.csv') }}
+
+
+``` mermaid
+graph LR
+  A[What to eat?] --> B{Hesitate};
+  B -->|KFC| C[Hmm...];
+  C --> D[Bad!];
+  D --> B;
+  B ---->|Mcdonald's| E[Yay!];
+```
+
+[:octicons-link-16:æ–‡æ¡£](https://mermaid.js.org/)ä»‹ç»äº†æ‰€æœ‰æ”¯æŒçš„å›¾
+
+!!! note " my title"
+    something
+
+!!! tip ""
+    no title
+
+??? warning "my title"
+    something
+
+!!! info  "no inline"
+    Now it suppports Noteï¼ŒAbstractï¼ŒInfoï¼ŒTipï¼ŒSuccessï¼ŒQuestionï¼ŒWariningï¼ŒFailureï¼ŒDangerï¼ŒBugï¼ŒExampleï¼ŒQuote
+
+!!! abstract inline  "inline"
+    somthing
+[Subscribe to our newsletter](#){ .md-button }
+
+[Subscribe to our newsletter](#){ .md-button .md-button--primary }
+
+=== "C"
+
+    ``` c
+    #include <stdio.h>
+
+    int main(void) {
+      printf("Hello world!\n");
+      return 0;
+    }
+    ```
+
+=== "C++"
+
+    ``` c++
+    #include <iostream>
+
+    int main(void) {
+      std::cout << "Hello world!" << std::endl;
+      return 0;
+    }
+    ```
+
 !!! note
     Search for emojis [here](https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/)
 
 !!! Definition
     Define sth
 
+Text can be {--deleted--} and replacement text {++added++}. This can also be
+combined into {~~one~>a single~~} operation. {==Highlighting==} is also
+possible {>>and comments can be added inline<<}.
+
+{==
+
+Formatting can also be applied to blocks by putting the opening and closing
+tags on separate lines and adding new lines between the tags and the content.
+
+==}
+
 - ==This was marked==
 - ^^This was inserted^^
 - ~~This was deleted~~
 
-- ÈÎÎñÁĞ±í
-- [x] Lab1
-- [ ] Lab2
-    * [x] demo1
-    * [x] demo2
-    * [ ] demo3
-- [ ] Lab3
+- H~2~O
+- A^T^A
 
-- latex
+++ctrl+alt+del++
 
+:heart_eyes:{.heart}
+
+:smile::sweat:
+
+<figure markdown>
+  ![Image title](https://dummyimage.com/600x400/){ width="300" }
+  <figcaption>Image caption</figcaption>
+</figure>
+![Image title](https://dummyimage.com/600x400/){ loading=lazy }
+
+<!-- ![](images/Format/2023-07-01-22-00-36.png#pic) -->
+
+- [x] Lorem ipsum dolor sit ametï¼Œ consectetur adipiscing elit
+- [ ] Vestibulum convallis sit amet nisi a tincidunt
+    * [x] In hac habitasse platea dictumst
+    * [x] In scelerisque nibh non dolor mollis congue sed et metus
+    * [ ] Praesent sed risus massa
+- [ ] Aenean pretium efficitur eratï¼Œ donec pharetraï¼Œ ligula non scelerisque
+
+$$
+\operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}
+$$
+
+
+[:material-information-outline:]{Important information}
+
+
+The HTML specification is maintained by the W3C.
+
+`Lorem ipsum dolor sit amet`
+
+:   Sed sagittis eleifend rutrum. Donec vitae suscipit est. Nullam tempus
+    tellus non sem sollicitudinï¼Œ quis rutrum leo facilisis.
+
+`Cras arcu libero`
+
+:   Aliquam metus erosï¼Œ pretium sed nulla venenatisï¼Œ faucibus auctor ex. Proin
+    ut eros sed sapien ullamcorper consequat. Nunc ligula ante.
+
+    Duis mollis est eget nibh volutpatï¼Œ fermentum aliquet dui mollis.
+    Nam vulputate tincidunt fringilla.
+    Nullam dignissim ultrices urna non auctor.
+
+| Method      | Description                          |
+| :---------: | :----------------------------------: |
+| `GET`       | :material-check:     Fetch resource  |
+| `PUT`       | :material-check-all: Update resource |
+| `DELETE`    | :material-close:     Delete resource |

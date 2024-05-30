@@ -15,5 +15,4 @@ nostatistics: true
 
 # Cuda - Synchronization
 
-## GPU
-
+## GPU测试
