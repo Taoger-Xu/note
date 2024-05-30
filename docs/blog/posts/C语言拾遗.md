@@ -9,8 +9,8 @@ nostatistics: true
 ---
 
 !!! abstract
-    一些有用的C语言技巧和坑，便于完成公开课实验
+    hello
 
 <!-- more -->
 
-# C语言拾遗
+# C 

@@ -14,7 +14,7 @@ nostatistics: true
     
 <!-- more -->
 
-!!! info "基本信息"
+!!! info csapp
     csapp
 
 ## Lab1

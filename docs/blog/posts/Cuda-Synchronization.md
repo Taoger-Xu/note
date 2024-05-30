@@ -9,11 +9,11 @@ nostatistics: true
 ---
 
 !!! abstract
-    cuda的同步操作
+    hello
 
 <!-- more -->
 
 # Cuda - Synchronization
 
-## GPU简介
+## GPU
 
