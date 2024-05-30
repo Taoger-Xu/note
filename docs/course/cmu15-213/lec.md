@@ -73,8 +73,12 @@ int main()
 }
 ```
 
-
+<figure markdown>
+  ![Image title](https://dummyimage.com/600x400/){ width="300" }
+  <figcaption>Image caption</figcaption>
+</figure>
 
 <img src="assets/image-20240303135256402.png" style="zoom:33%;" />
 
 <img src="assets/image-20240303135813726.png" alt="59%" style="zoom:50%;" />
+

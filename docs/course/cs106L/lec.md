@@ -2,8 +2,7 @@
 authors:
     - taoger
 categories:
-    - csapp
-    - ics
+    - cpp
 date: 2024-03-01
 nostatistics: true
 ---
@@ -14,7 +13,7 @@ nostatistics: true
     
 <!-- more -->
 
-!!! info "基本信息"
+!!! info cs106L 
     csapp
 
 ## Lab1

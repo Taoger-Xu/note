@@ -5,15 +5,16 @@ hide:
   - toc
 ---
 
-# ï¼ˆ à¹‘> Ø‚ < ï¼‰ Hi!
+# £¨ ?> ? < £© Hi!
 
-æ¬¢è¿æ¥åˆ°æˆ‘çš„ä¸»é¡µï¼
+»¶Ó­À´µ½JintaoµÄ²©¿Í£¬ÏÂÃæÊÇ²©¿ÍÑùÊ½Ò»ÀÀ
 
-# æ ·å¼ä¸€è§ˆ
+# ÑùÊ½Ò»ÀÀ
 !!! abstraction
-    æ­¤é¡µé¢å°†ä¼šåˆ—å‡ºæœ¬ç«™ç‚¹ç›®å‰æ”¯æŒçš„æ‰€æœ‰æ˜¾ç¤ºæ ·å¼ï¼Œå€Ÿé‰´äº[note](https://stormckey.github.io/Format/)
+    ´ËÒ³Ãæ½«»áÁĞ³ö±¾Õ¾µãÄ¿Ç°Ö§³ÖµÄËùÓĞÏÔÊ¾ÑùÊ½
+    Ğí¶à¶¼À´×Ô[:octicons-link-16: Material for Mkdocs](https://squidfunk.github.io/mkdocs-material/)
 
-- ä»£ç ç‰‡æ®µ
+- ´úÂë
 ```cpp
 #include<iostream>
 int main()
@@ -23,7 +24,7 @@ int main()
 }
 ```
 
-- æ–‡å­—ç‰‡æ®µ
+- ÌáÊ¾¿ò
 !!! note
     Search for emojis [here](https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/)
 
@@ -34,7 +35,7 @@ int main()
 - ^^This was inserted^^
 - ~~This was deleted~~
 
-- ä»»åŠ¡åˆ—è¡¨
+- ÈÎÎñÁĞ±í
 - [x] Lab1
 - [ ] Lab2
     * [x] demo1
