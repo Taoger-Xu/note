@@ -1,5 +1,6 @@
 # Project information
-site_name: Jintaoxu's Page
+site_name: Jintaoxu's Note
+site_description: JintaoXu'笔记本
 site_url: https://taoger-xu.github.io/note/
 site_author: Jintao Xu
 
@@ -52,7 +53,11 @@ plugins:
       post_date_format: medium
       post_excerpt: required
       post_readtime_words_per_minute: 150
-    
+extra:
+  analytics:
+    provider: google
+    property: UA-XXXXXXXX-X
+
 extra_css:
   - css/extra.css
   - https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css
