@@ -4,12 +4,15 @@ site_description: JintaoXu'笔记本
 site_url: https://taoger-xu.github.io/note/
 site_author: Jintao Xu
 
+copyright: Copyright &copy; JintaoXu
+
 # Repository
 repo_name: note
 repo_url: https://github.com/Taoger-Xu/note
 
 theme:
   name: material
+  custom_dir: overrides
   language: 'zh'
   font:
     text: LXGW WenKai Screen  
@@ -19,6 +22,22 @@ theme:
   icon:
     repo: fontawesome/brands/github-alt # the github cat icon in the topright
     logo: material/cat # the cat icon in the topleft
+    annotation: material/star-four-points-circle
+  
+  # 切换明暗主题
+  palette: # my customized schema
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     # - navigation.prune
     - navigation.tracking
@@ -55,6 +74,7 @@ plugins:
       post_excerpt: required
       post_readtime_words_per_minute: 150
 extra:
+  vssue: shafish  # 随便填值，主要是设置{% set vssue = config.extra.vssue %}时，vssue初始值可用
   analytics:
     provider: google
     property: UA-XXXXXXXX-X
