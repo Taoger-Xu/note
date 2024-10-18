@@ -2,10 +2,16 @@
 authors:
     - taoger
 categories:
-    - book
-    - linker
+    - nju
+    - os
 date: 2024-02-29
 nostatistics: true
+
 ---
 
-# demo
+# C++ 快速入门
+
+!!! abstract
+    jyy os
+
+<!-- more -->
