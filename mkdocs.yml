@@ -168,5 +168,11 @@ nav:
         - course/cs106L/index.md
         - Lab: course/cs106L/lab.md
         - Lec: course/cs106L/lec.md
+      - mit 6.S081:
+        - course/mit 6.s081/index.md
+        - Lab: course/cs106L/lab.md
+        - Lec: course/cs106L/lec.md
   - Paper:
       - paper/index.md
+  - Gpgpu-sim:
+      - gpgpu-sim/index.md
