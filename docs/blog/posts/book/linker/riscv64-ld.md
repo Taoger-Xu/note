@@ -2,14 +2,14 @@
 authors:
     - taoger
 categories:
-    - book
+    - ics
     - linker
-date: 2024-02-29
+date: 2024-10-24
 nostatistics: true
 ---
 
 !!! abstract
-    程序员的自我修养
+    本教程来自PLCT实验室的公开课教程[从零开始实现链接器](https://www.bilibili.com/video/BV1D8411j7fo/?spm_id_from=333.337.search-card.all.click&vd_source=e6c6915f1ab3ff5fc66616ddb7432e32)，我的实现仓库是[riscv64-ld](https://github.com/Taoger-Xu/riscv64-ld)
 
 <!-- more -->
 
