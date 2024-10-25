@@ -3,14 +3,7 @@ nostatistics: true
 ---
 # 论文阅读模板
 
-## 论文标题
+!!! Abstract
+    这里用来放读论文的笔记，写的不好还请见谅>_<|||
 
-# reading list
-
-## ISCA
-
-Barre Chord: Efficient Virtual Memory Translation for Multi-Chip-Module GPUs
-
-## HPCA
-
-## Other
+* [Mosaic: A GPU Memory Manager with Application-Transparent Support for Multiple Page Sizes](Mosaic.md)

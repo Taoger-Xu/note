@@ -174,5 +174,7 @@ nav:
         - Lec: course/cs106L/lec.md
   - Paper:
       - paper/index.md
+      - Mosaic:
+        - paper/Mosaic.md
   - Gpgpu-sim:
       - gpgpu-sim/index.md
