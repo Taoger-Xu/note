@@ -170,11 +170,10 @@ nav:
         - Lec: course/cs106L/lec.md
       - mit 6.S081:
         - course/mit 6.s081/index.md
-        - Lab: course/cs106L/lab.md
-        - Lec: course/cs106L/lec.md
+        - Lab: course/mit 6.s081/lab.md
+        - Lec: course/mit 6.s081/lec.md
   - Paper:
       - paper/index.md
-      - Mosaic:
-        - paper/Mosaic.md
+      - Mosaic: paper/Mosaic.md
   - Gpgpu-sim:
       - gpgpu-sim/index.md
