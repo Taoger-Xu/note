@@ -161,7 +161,6 @@ nav:
 
   - Blog:
       - blog/index.md
-  - Topics: topics/index.md
   - Course:
       - course/index.md
       - CMU 15-213:
@@ -181,6 +180,3 @@ nav:
         - course/mit 6.s081/index.md
         - Lab: course/mit 6.s081/lab.md
         - Lec: course/mit 6.s081/lec.md
-  - Paper:
-      - paper/index.md
-      - Mosaic: paper/Mosaic.md

@@ -82,16 +82,11 @@ def on_files(files, config):
     return files
 
 
-def topic_link(topic, page, config):
-    archive = 'topics/' if config['use_directory_urls'] else 'topics/index.html'
-    return escape(get_relative_url(archive, page.file.url) + '#' + topic, quote=True)
-
-
-def map_html(page, config):
+def map_html():
     parts = ['<div class="topic-map-scroll" tabindex="0" role="region" aria-label="整站流程导览图，可横向滚动">',
-             '<svg class="topic-map" viewBox="0 0 1110 650" role="group" aria-labelledby="topic-map-title topic-map-desc">',
+             '<svg class="topic-map" viewBox="0 0 1110 650" role="img" aria-labelledby="topic-map-title topic-map-desc">',
              '<title id="topic-map-title">整站流程导览图</title>',
-             '<desc id="topic-map-desc">从基座模型出发，经过后训练形成对齐模型，延伸至推理、评测和 Agent。点击方块查看本站对应文章。</desc>',
+             '<desc id="topic-map-desc">从基座模型出发，经过后训练形成对齐模型，延伸至推理、评测和 Agent。</desc>',
              '<defs><marker id="topic-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L9 5 L0 9 Z"/></marker></defs>',
              '<g class="topic-group topic-group--post"><rect x="228" y="112" width="392" height="428" rx="12"/><text x="246" y="142">后训练</text></g>',
              '<g class="topic-group topic-group--agent"><rect x="860" y="330" width="240" height="240" rx="12"/><text x="878" y="360">Agent</text></g>']
@@ -132,27 +127,20 @@ def map_html(page, config):
             group = 'rsi'
         else:
             group = 'base'
-        count = len(ARTICLES[key])
-        status = f'{count} 篇文章' if count else '暂无文章'
         title_y = y + (24 if height == 52 else 30)
         if not desc:
             title_y = y + 34
         parts.append(
-            f'<a class="topic-node topic-node--{group}" href="{topic_link(key, page, config)}" aria-label="{escape(title)}，{status}">'
-            f'<title>{escape(title)} · {status} · 点击查看</title>'
+            f'<g class="topic-node topic-node--{group}">'
+            f'<title>{escape(title)}</title>'
             f'<rect class="topic-node-card" x="{x}" y="{y}" width="{width}" height="{height}" rx="8"/>'
             f'<rect class="topic-node-bar" x="{x}" y="{y}" width="4" height="{height}"/>'
             f'<text class="topic-node-title" x="{x+18}" y="{title_y}">{escape(title)}</text>')
         if desc:
             fit = f' textLength="{width-30}" lengthAdjust="spacingAndGlyphs"' if key in {'architecture', 'base-models', 'sft', 'rlhf'} else ''
             parts.append(f'<text class="topic-node-desc" x="{x+18}" y="{title_y+20}"{fit}>{escape(desc)}</text>')
-        parts.append('</a>')
-    parts.append('</svg></div><div class="topic-map-extras">')
-    for key, title, _ in EXTRA_TOPICS:
-        if key == 'other' and not ARTICLES[key]:
-            continue
-        parts.append(f'<a href="{topic_link(key, page, config)}">{escape(title)} <span>{len(ARTICLES[key])} 篇 →</span></a>')
-    parts.append('</div>')
+        parts.append('</g>')
+    parts.append('</svg></div>')
     return ''.join(parts)
 
 
@@ -176,7 +164,7 @@ def archive_html(page, config):
 
 def on_page_markdown(markdown, page, config, files):
     if page.file.src_uri == 'index.md':
-        return markdown.replace('<!-- TOPIC_MAP -->', map_html(page, config))
+        return markdown.replace('<!-- TOPIC_MAP -->', map_html())
     if page.file.src_uri == 'topics/index.md':
         return markdown.replace('<!-- TOPIC_ARCHIVE -->', archive_html(page, config))
     return markdown

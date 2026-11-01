@@ -26,8 +26,6 @@
 .topic-node-desc { fill: #b8c3d4; font-size: 14px; }
 .topic-node--hub .topic-node-title { fill: #101c2f; }
 .topic-node--hub .topic-node-desc { fill: #233e64; }
-.topic-node:hover .topic-node-card, .topic-node:focus .topic-node-card { stroke: #ffffff; stroke-width: 2; }
-.topic-node:focus { outline: none; }
 .topic-map-extras { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .md-typeset .topic-map-extras a { display: flex; align-items: center; gap: 20px; background: var(--home-blue); padding: 10px 16px; border: 1px solid var(--home-line); border-radius: 9px; font-size: 13px; }
 .topic-map-extras span { color: var(--home-muted); font-size: 12px; }
