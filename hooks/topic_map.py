@@ -71,8 +71,6 @@ def on_files(files, config):
                 topics = topics + ['computer-systems']
         if file.src_uri.startswith(('course/', 'blog/posts/course/')):
             topics = topics + ['courses']
-        if file.src_uri.startswith(('course/cmu15-213/', 'course/mit 6.s081/')):
-            topics = topics + ['computer-systems']
         if not topics:
             topics = ['other']
         for topic in set(topics):

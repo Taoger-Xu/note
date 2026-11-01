@@ -1,6 +1,9 @@
 ---
-nostatistics: true
+title: 课程笔记
+comments: false
 ---
-#  笔记本！
-!!! abstract "记录自己学过的公开课"
-    在这里会记录自己学过的cs公开课的过程，主要是留下经验贴和用于自己复习，记录自己的产出
+
+# 课程笔记
+
+- [CS336 · Language Modeling from Scratch](cs336/index.md)：从零构建语言模型。
+- [CMU Agent · AI Agents](cmu-agent/index.md)：大语言模型智能体的训练与构建。
