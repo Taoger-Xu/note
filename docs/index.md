@@ -20,8 +20,8 @@ hide:
 </section>
 
 <section class="home-section home-map-section" aria-labelledby="site-map">
-<div class="home-section-heading"><div><p class="home-eyebrow">KEYWORDS / KNOWLEDGE MAP</p><h2 id="site-map">关键词 · 整站地图</h2></div><a href="topics/">全部主题文章 →</a></div>
-<p class="topic-map-intro">沿着模型、训练与应用的脉络探索。点击主题，查找本站对应的文章与学习笔记。</p>
+<div class="home-section-heading"><div><p class="home-eyebrow">KEYWORDS / KNOWLEDGE MAP</p><h2 id="site-map">关键词 · 流程导览图</h2></div><a href="topics/">全部主题文章 →</a></div>
+<p class="topic-map-intro">从基座模型出发，沿训练、推理与 Agent 的连线探索。点击图中方块，阅读本站对应的文章与笔记。</p>
 <!-- TOPIC_MAP -->
 <p class="topic-map-credit">结构参考 <a href="https://zhoujx4.github.io/llm-atlas/#整站地图" target="_blank" rel="noopener noreferrer">LLM Atlas 整站地图 ↗</a> · 节点链接至本站文章索引</p>
 </section>

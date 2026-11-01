@@ -9,22 +9,22 @@ from mkdocs.plugins import event_priority
 
 # id, title, short description, x, y, width, height
 NODES = [
-    ('architecture', '模型架构', 'Attention / MoE / 多模态', 24, 65, 180, 74),
-    ('base-models', '基座模型', '预训练 / 模型家族', 24, 255, 180, 74),
-    ('aigc', 'AIGC', '扩散 / 图像与视频生成', 24, 465, 180, 74),
-    ('sft', 'SFT 监督微调', '指令数据 / 训练目标', 260, 255, 180, 74),
-    ('dpo', 'DPO 系列', '离线偏好优化', 480, 145, 180, 74),
-    ('rlhf', 'PPO / GRPO', '奖励与强化学习', 480, 255, 180, 74),
-    ('distillation', 'OPD / 蒸馏', '教师与学生模型', 480, 365, 180, 74),
-    ('lora', 'LoRA 系列', '参数高效微调 · 可用于不同训练阶段', 260, 470, 400, 74),
-    ('post-training', '对齐与后训练', '能力与行为优化', 720, 255, 180, 74),
-    ('inference', '推理优化与解码', '量化 / KV Cache / 投机解码', 960, 65, 220, 74),
-    ('evaluation', '评测', '基准 / 可靠性 / 模型评价', 960, 185, 220, 74),
-    ('reasoning', '推理模型', 'RLVR / 测试时计算', 720, 420, 180, 74),
-    ('agent', 'Agent 训练', '工具使用 / Agentic RL', 960, 345, 220, 74),
-    ('harness', 'Harness 工程', '上下文 / 执行循环 / 沙箱', 960, 445, 220, 74),
-    ('skills', 'Skills', '技能组织与复用', 960, 545, 220, 74),
-    ('rsi', 'RSI 自我改进', '反馈与迭代', 720, 570, 180, 74),
+    ('architecture', '模型架构', 'Transformer · MoE · 多模态', 24, 70, 160, 64),
+    ('base-models', '基座模型', 'Qwen · DeepSeek · Llama', 24, 252, 160, 64),
+    ('aigc', 'AIGC 扩散', 'DiT · Flow · 视频', 24, 450, 160, 64),
+    ('sft', 'SFT', '数据 · 模板 · Packing', 250, 252, 150, 64),
+    ('dpo', 'DPO 系列', 'IPO · KTO · SimPO', 440, 152, 160, 64),
+    ('rlhf', 'PPO · GRPO', 'DAPO · GSPO · CISPO', 440, 252, 160, 64),
+    ('distillation', 'OPD / 蒸馏', '白盒 · 黑盒 · 自蒸馏', 440, 352, 160, 64),
+    ('lora', 'LoRA 系列', 'QLoRA · DoRA · PiSSA — 可叠加在以上任一阶段', 250, 440, 350, 56),
+    ('post-training', '对齐模型', '可用的模型', 680, 252, 150, 64),
+    ('inference', '推理优化与解码', 'KV Cache · 量化 · 投机', 880, 120, 200, 64),
+    ('evaluation', '评测', '基准 · judge · Rubric', 880, 230, 200, 64),
+    ('reasoning', '推理模型', 'RLVR · 测试时扩展', 680, 400, 150, 64),
+    ('agent', 'Agent 训练', 'Tool Use · Agentic RL', 880, 372, 200, 52),
+    ('harness', 'Harness 工程', '执行循环 · 上下文 · 沙箱', 880, 440, 200, 52),
+    ('skills', 'Skills', '能力封装与自迭代', 880, 508, 200, 52),
+    ('rsi', 'RSI 自我改进', '', 680, 560, 150, 56),
 ]
 EXTRA_TOPICS = [
     ('training-systems', '训练系统 / 分布式', '并行训练、显存与计算效率'),
@@ -88,38 +88,65 @@ def topic_link(topic, page, config):
 
 
 def map_html(page, config):
-    parts = ['<div class="topic-map-scroll" tabindex="0" role="region" aria-label="整站地图，可横向滚动">',
-             '<svg class="topic-map" viewBox="0 0 1204 680" role="group" aria-labelledby="topic-map-title topic-map-desc">',
-             '<title id="topic-map-title">文章主题地图</title>',
-             '<desc id="topic-map-desc">基座模型经过后训练走向推理、评测与 Agent。每个主题链接到本站文章索引。</desc>',
-             '<defs><marker id="topic-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9"/></marker></defs>',
-             '<rect class="topic-panel" x="240" y="105" width="440" height="460" rx="16"/>',
-             '<text class="topic-panel-label" x="260" y="130">后训练</text>',
-             '<rect class="topic-panel" x="940" y="305" width="260" height="335" rx="16"/>',
-             '<text class="topic-panel-label" x="960" y="330">Agent</text>']
+    parts = ['<div class="topic-map-scroll" tabindex="0" role="region" aria-label="整站流程导览图，可横向滚动">',
+             '<svg class="topic-map" viewBox="0 0 1110 650" role="group" aria-labelledby="topic-map-title topic-map-desc">',
+             '<title id="topic-map-title">整站流程导览图</title>',
+             '<desc id="topic-map-desc">从基座模型出发，经过后训练形成对齐模型，延伸至推理、评测和 Agent。点击方块查看本站对应文章。</desc>',
+             '<defs><marker id="topic-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L9 5 L0 9 Z"/></marker></defs>',
+             '<g class="topic-group topic-group--post"><rect x="228" y="112" width="392" height="428" rx="12"/><text x="246" y="142">后训练</text></g>',
+             '<g class="topic-group topic-group--agent"><rect x="860" y="330" width="240" height="240" rx="12"/><text x="878" y="360">Agent</text></g>']
     paths = [
-        'M114 255 V139', 'M114 329 V465', 'M204 292 H260',
-        'M440 292 C460 292 460 182 480 182', 'M440 292 H480',
-        'M440 292 C460 292 460 402 480 402',
-        'M660 182 C690 182 690 280 720 280', 'M660 292 H720',
-        'M660 402 C690 402 690 304 720 304',
-        'M660 329 C690 350 690 420 720 445',
-        'M900 278 C930 278 930 102 960 102',
-        'M900 292 C930 292 930 222 960 222',
-        'M900 306 C930 306 930 382 960 382',
-        'M1070 419 V445', 'M1070 519 V545',
-        'M960 582 C930 582 930 607 900 607',
+        ('M104 252 V134', True), ('M104 316 V450', True),
+        ('M184 284 H250', False),
+        ('M400 284 C420 284 420 184 440 184', False),
+        ('M400 284 H440', False),
+        ('M400 284 C420 284 420 384 440 384', False),
+        ('M600 184 C640 184 640 268 680 268', False),
+        ('M600 284 H680', False),
+        ('M600 384 C640 384 640 300 680 300', False),
+        ('M600 300 C648 318 652 388 680 426', False),
+        ('M830 274 C856 274 856 152 880 152', False),
+        ('M830 284 C856 284 856 262 880 262', False),
+        ('M830 296 C856 296 856 398 880 398', False),
+        ('M980 424 V440', False), ('M980 492 V508', False),
+        ('M880 534 C852 534 848 588 830 588', True),
     ]
-    parts.extend(f'<path class="topic-edge" d="{d}" marker-end="url(#topic-arrow)"/>' for d in paths)
+    for path, dashed in paths:
+        style = ' topic-edge--dashed' if dashed else ''
+        parts.append(f'<path class="topic-edge{style}" d="{path}" marker-end="url(#topic-arrow)"/>')
+    labels = [(112, 200, 'start', '架构'), (112, 390, 'start', '另一条赛道'),
+              (656, 350, 'start', '可验证奖励'), (855, 240, 'middle', '度量'),
+              (838, 548, 'end', '自我改进')]
+    for x, y, anchor, text in labels:
+        parts.append(f'<text class="topic-edge-label" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>')
     for key, title, desc, x, y, width, height in NODES:
+        if key in {'sft', 'dpo', 'rlhf', 'distillation', 'lora'}:
+            group = 'post'
+        elif key in {'inference', 'evaluation', 'reasoning'}:
+            group = 'serve'
+        elif key in {'agent', 'harness', 'skills'}:
+            group = 'agent'
+        elif key == 'post-training':
+            group = 'hub'
+        elif key == 'rsi':
+            group = 'rsi'
+        else:
+            group = 'base'
         count = len(ARTICLES[key])
-        status = f'{count} 篇' if count else '待更新'
+        status = f'{count} 篇文章' if count else '暂无文章'
+        title_y = y + (24 if height == 52 else 30)
+        if not desc:
+            title_y = y + 34
         parts.append(
-            f'<a class="topic-node" href="{topic_link(key, page, config)}" aria-label="{escape(title)}，{status}">'
-            f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="9"/>'
-            f'<text class="topic-node-title" x="{x+13}" y="{y+25}">{escape(title)}</text>'
-            f'<text class="topic-node-desc" x="{x+13}" y="{y+46}">{escape(desc)}</text>'
-            f'<text class="topic-node-count" x="{x+13}" y="{y+64}">{status} →</text></a>')
+            f'<a class="topic-node topic-node--{group}" href="{topic_link(key, page, config)}" aria-label="{escape(title)}，{status}">'
+            f'<title>{escape(title)} · {status} · 点击查看</title>'
+            f'<rect class="topic-node-card" x="{x}" y="{y}" width="{width}" height="{height}" rx="8"/>'
+            f'<rect class="topic-node-bar" x="{x}" y="{y}" width="4" height="{height}"/>'
+            f'<text class="topic-node-title" x="{x+18}" y="{title_y}">{escape(title)}</text>')
+        if desc:
+            fit = f' textLength="{width-30}" lengthAdjust="spacingAndGlyphs"' if key in {'architecture', 'base-models', 'sft', 'rlhf'} else ''
+            parts.append(f'<text class="topic-node-desc" x="{x+18}" y="{title_y+20}"{fit}>{escape(desc)}</text>')
+        parts.append('</a>')
     parts.append('</svg></div><div class="topic-map-extras">')
     for key, title, _ in EXTRA_TOPICS:
         if key == 'other' and not ARTICLES[key]:
