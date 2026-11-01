@@ -1,0 +1,53 @@
+/* Home layout; shared header colors follow the avatar's cream and blue palette. */
+[data-md-color-scheme="default"] { --md-primary-fg-color: #28566a; --md-accent-fg-color: #287e9c; }
+.md-header__button.md-logo img { border-radius: 50%; object-fit: cover; }
+.home-page { --home-ink: #243f4a; --home-muted: #62737b; --home-line: #dce5e7; --home-surface: #f7f9f8; --home-blue: #e6f0f3; color: var(--home-ink); max-width: 1120px; margin: 0 auto; }
+[data-md-color-scheme="slate"] .home-page { --home-ink: #e1edf0; --home-muted: #adbec6; --home-line: #3b4c56; --home-surface: #24323c; --home-blue: #273e4b; }
+.md-typeset .home-page a { color: inherit; }
+.home-hero { display: grid; grid-template-columns: 1fr 260px; gap: 48px; align-items: center; padding: 52px 48px; border: 1px solid var(--home-line); border-radius: 24px; background: linear-gradient(120deg, var(--home-surface), var(--home-blue)); }
+.md-typeset .home-eyebrow { font: 600 11px/1.5 sans-serif; letter-spacing: .16em; color: var(--home-muted); margin: 0 0 16px; }
+.md-typeset .home-intro h1 { font-size: clamp(30px, 3.6vw, 46px); font-weight: 700; line-height: 1.4; letter-spacing: -.035em; color: var(--home-ink); margin: 0 0 20px; }
+.home-intro h1 span { color: #4695ad; }
+.md-typeset .home-description { max-width: 490px; color: var(--home-muted); font-size: 16px; line-height: 1.9; }
+.home-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 22px; margin: 28px 0; font-size: 14px; }
+.md-typeset a.home-button { background: #28566a; color: #fff; padding: 11px 19px; border-radius: 8px; display: inline-flex; gap: 20px; }
+.home-secondary { border-bottom: 1px solid var(--home-line); padding: 7px 0; }
+.home-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-topics span { font: 11px/1.5 sans-serif; color: var(--home-muted); border: 1px solid var(--home-line); border-radius: 20px; padding: 5px 10px; }
+.home-profile { text-align: center; }
+.home-profile img { width: 200px; height: 200px; object-fit: cover; border-radius: 50%; border: 7px solid #fff8ea; box-shadow: 0 12px 35px #28566a18; }
+.md-typeset .home-profile p { margin: 5px 0; font-size: 13px; color: var(--home-muted); }
+.md-typeset .home-profile .home-profile-name { font-size: 22px; font-weight: 700; color: var(--home-ink); margin-top: 18px; }
+.home-profile a { display: inline-block; margin-top: 9px; font: 12px/1.5 sans-serif; }
+.home-section { margin-top: 60px; }
+.home-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 23px; }
+.md-typeset .home-section-heading .home-eyebrow { margin-bottom: 8px; }
+.md-typeset .home-page h2 { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+.home-section-heading > span { font-size: 13px; color: var(--home-muted); }
+.home-course-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.home-card { display: flex; flex-direction: column; padding: 28px; border: 1px solid var(--home-line); border-radius: 14px; transition: border-color .2s, transform .2s; }
+.home-card-featured { background: var(--home-blue); }
+.home-card-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--home-muted); font: 11px/1.5 sans-serif; letter-spacing: .06em; }
+.md-typeset .home-card h3 { font: 700 25px/1.4 sans-serif; margin: 23px 0 5px; }
+.home-card h3 span, .home-reading-card h3 span { float: right; color: var(--home-muted); font-weight: 400; }
+.md-typeset .home-card p { color: var(--home-muted); font-size: 14px; line-height: 1.8; margin: 10px 0 22px; }
+.md-typeset .home-card .home-card-subtitle { font: 13px/1.6 sans-serif; color: var(--home-ink); margin: 0; }
+.home-card-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-muted); }
+.home-card-footer span { color: var(--home-ink); }
+.home-reading-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.home-reading-card { display: flex; align-items: start; gap: 17px; padding: 23px; border-radius: 12px; background: var(--home-surface); border: 1px solid var(--home-line); transition: border-color .2s, transform .2s; }
+.home-reading-icon { flex: 0 0 43px; text-align: center; padding: 10px 0; background: var(--home-blue); border-radius: 10px; font: 700 15px/1.5 sans-serif; }
+.home-reading-card > div { flex: 1; min-width: 0; }
+.md-typeset .home-reading-card h3 { font: 600 16px/1.5 sans-serif; margin: 0 0 6px; }
+.md-typeset .home-reading-card p { font-size: 13px; color: var(--home-muted); margin: 0; line-height: 1.8; }
+.home-notebook { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 32px; border: 1px solid var(--home-line); border-radius: 14px; margin-top: 54px; }
+.md-typeset .home-notebook p:not(.home-eyebrow) { font-size: 14px; color: var(--home-muted); }
+.home-notebook-links { display: flex; flex-direction: column; justify-content: center; }
+.home-notebook-links a { display: flex; justify-content: space-between; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--home-line); font-size: 15px; }
+.home-notebook-links span { font: 12px/1.8 sans-serif; color: var(--home-muted); }
+.md-typeset .home-signoff { text-align: center; color: var(--home-muted); font: 12px/1.6 sans-serif; letter-spacing: .08em; margin: 40px 0 20px; }
+.home-page a:focus-visible { outline: 3px solid #4695ad; outline-offset: 5px; }
+@media (hover: hover) { .home-card:hover, .home-reading-card:hover { border-color: #4695ad; transform: translateY(-3px); } .home-button:hover { background: #34718a; } }
+@media (max-width: 760px) { .home-hero { grid-template-columns: 1fr; padding: 30px 24px; gap: 30px; } .home-profile { grid-row: 1; } .home-profile img { width: 130px; height: 130px; } .home-section-heading { align-items: start; flex-direction: column; gap: 8px; } .home-course-grid, .home-reading-grid, .home-notebook { grid-template-columns: 1fr; } .home-card { padding: 23px; } .home-section { margin-top: 40px; } .home-notebook { padding: 24px; gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .home-card, .home-reading-card { transition: none; } }
+.home-card-meta, .md-typeset .home-reading-card h3 { font-family: var(--md-text-font-family), sans-serif; }

@@ -18,10 +18,10 @@ theme:
     text: LXGW WenKai Screen  
     code: Monaspace Krypton
 
-  favicon: icons/cat.svg
+  logo: assets/avatar.jpg
+  favicon: assets/avatar.jpg
   icon:
     repo: fontawesome/brands/github-alt # the github cat icon in the topright
-    logo: material/cat # the cat icon in the topleft
     annotation: material/star-four-points-circle
   
   # 切换明暗主题
@@ -67,12 +67,6 @@ plugins:
   - offline: # enable searching offline
       enabled: !ENV [OFFLINE, false]
   - glightbox
-  - blog:
-      post_url_format: "{slug}"
-      blog_toc: true
-      post_date_format: medium
-      post_excerpt: required
-      post_readtime_words_per_minute: 150
 extra:
   vssue: shafish  # 随便填值，主要是设置{% set vssue = config.extra.vssue %}时，vssue初始值可用
   analytics:
@@ -81,6 +75,7 @@ extra:
 
 extra_css:
   - css/extra.css
+  - css/home.css
   - https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css
   - https://fonts.googleapis.com/css?family=Noto+Serif+SC:300,300i,400,400i,700,700i&display=fallback
   
@@ -150,8 +145,6 @@ markdown_extensions:
 nav:
   - Home:
       - index.md
-  - Blog:
-      - blog/index.md
 
   - Course:
       - course/index.md
@@ -175,5 +168,3 @@ nav:
   - Paper:
       - paper/index.md
       - Mosaic: paper/Mosaic.md
-  - Gpgpu-sim:
-      - gpgpu-sim/index.md
