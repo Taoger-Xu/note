@@ -75,10 +75,14 @@ extra:
     provider: google
     property: UA-XXXXXXXX-X
 
+hooks:
+  - hooks/topic_map.py
+
 extra_css:
   - css/extra.css
   - css/theme.css
   - css/home.css
+  - css/topics.css
   - https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css
   - https://fonts.googleapis.com/css?family=Noto+Serif+SC:300,300i,400,400i,700,700i&display=fallback
   
@@ -149,6 +153,7 @@ nav:
   - Home:
       - index.md
 
+  - Topics: topics/index.md
   - Course:
       - course/index.md
       - CMU 15-213:

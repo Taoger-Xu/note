@@ -14,9 +14,16 @@ hide:
 <h1>保持好奇，<br>把探索写成笔记<span>。</span></h1>
 <p class="home-description">从计算机系统到深度学习，在课程、论文与代码之间，慢慢建立自己的知识地图。</p>
 <div class="home-actions"><a class="home-button" href="course/">翻开课程笔记 <span aria-hidden="true">↗</span></a><a class="home-secondary" href="paper/">阅读论文笔记 →</a></div>
-<div class="home-topics"><span>Computer Systems</span><span>Deep Learning</span><span>Learning by Doing</span></div>
+<div class="home-topics"><a href="topics/#computer-systems">Computer Systems ↗</a><a href="#site-map">Deep Learning ↘</a><a href="topics/#courses">Learning by Doing ↗</a></div>
 </div>
 <div class="home-profile"><img src="assets/avatar.jpg" alt="Jintao 的头像" width="240" height="240"><p class="home-profile-name">Jintao Xu</p><p>Learn. Build. Share.</p><a href="https://github.com/Taoger-Xu" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+</section>
+
+<section class="home-section home-map-section" aria-labelledby="site-map">
+<div class="home-section-heading"><div><p class="home-eyebrow">KEYWORDS / KNOWLEDGE MAP</p><h2 id="site-map">关键词 · 整站地图</h2></div><a href="topics/">全部主题文章 →</a></div>
+<p class="topic-map-intro">沿着模型、训练与应用的脉络探索。点击主题，查找本站对应的文章与学习笔记。</p>
+<!-- TOPIC_MAP -->
+<p class="topic-map-credit">结构参考 <a href="https://zhoujx4.github.io/llm-atlas/#整站地图" target="_blank" rel="noopener noreferrer">LLM Atlas 整站地图 ↗</a> · 节点链接至本站文章索引</p>
 </section>
 
 <section class="home-section" aria-labelledby="courses-title">

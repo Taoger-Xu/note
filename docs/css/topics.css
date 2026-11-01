@@ -1,0 +1,27 @@
+.home-topics a { font-size: 11px; color: var(--home-muted); border: 1px solid var(--home-line); border-radius: 20px; padding: 5px 10px; }
+.home-topics a:hover { border-color: var(--md-accent-fg-color); }
+.home-map-section .home-section-heading > a { font-size: 13px; }
+.md-typeset .topic-map-intro, .md-typeset .topic-map-credit { color: var(--home-muted); font-size: 13px; }
+.topic-map-scroll { overflow-x: auto; border: 1px solid var(--home-line); border-radius: 16px; background: var(--home-surface); padding: 12px; }
+.topic-map { display: block; width: 100%; min-width: 920px; height: auto; font-family: var(--md-text-font-family), sans-serif; }
+.topic-panel { fill: var(--home-blue); stroke: var(--home-line); }
+.topic-panel-label { fill: var(--home-muted); font-size: 14px; font-weight: 700; }
+.topic-edge { fill: none; stroke: var(--home-muted); stroke-width: 1.4; opacity: .65; }
+#topic-arrow path { fill: none; stroke: var(--home-muted); stroke-width: 1.5; }
+.topic-node rect { fill: var(--md-default-bg-color); stroke: var(--home-line); stroke-width: 1.5; }
+.topic-node:hover rect, .topic-node:focus rect { stroke: var(--md-accent-fg-color); stroke-width: 2.5; }
+.topic-node-title { fill: var(--home-ink); font-size: 16px; font-weight: 700; }
+.topic-node-desc { fill: var(--home-muted); font-size: 11px; }
+.topic-node-count { fill: var(--md-typeset-a-color); font-size: 10px; }
+.topic-map-extras { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.md-typeset .topic-map-extras a { display: flex; align-items: center; gap: 20px; background: var(--home-blue); padding: 10px 16px; border: 1px solid var(--home-line); border-radius: 9px; font-size: 13px; }
+.topic-map-extras span { color: var(--home-muted); font-size: 12px; }
+.topic-archive { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.topic-archive-section { border: 1px solid var(--home-line); border-radius: 14px; padding: 24px; background: var(--home-surface); }
+.md-typeset .topic-archive-section h2 { margin: 0 0 16px; font-size: 20px; scroll-margin-top: 110px; }
+.topic-archive-section h2 span { color: var(--home-muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.md-typeset .topic-empty { color: var(--home-muted); font-size: 14px; }
+.topic-archive-section ul { font-size: 14px; overflow-wrap: anywhere; }
+.md-typeset .topic-back { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--home-muted); }
+#site-map { scroll-margin-top: 110px; }
+@media (max-width: 760px) { .topic-archive { grid-template-columns: 1fr; } .topic-map-scroll { padding: 4px; } }
