@@ -46,6 +46,6 @@ hide:
 </div>
 </section>
 
-<section class="home-notebook" aria-labelledby="notes-title"><div><p class="home-eyebrow">03 / MY NOTES</p><h2 id="notes-title">学过的，留下来。</h2><p>记录课程实验、系统原理和论文阅读中的思考。</p></div><div class="home-notebook-links"><a href="course/">课程笔记 <span>Course →</span></a><a href="paper/">论文阅读 <span>Paper →</span></a></div></section>
+<section class="home-notebook" aria-labelledby="notes-title"><div><p class="home-eyebrow">03 / MY NOTES</p><h2 id="notes-title">学过的，留下来。</h2><p>记录课程实验、系统原理和论文阅读中的思考。</p></div><div class="home-notebook-links"><a href="blog/">博客文章 <span>Blog →</span></a><a href="course/">课程笔记 <span>Course →</span></a><a href="paper/">论文阅读 <span>Paper →</span></a></div></section>
 <p class="home-signoff">Stay curious. Keep building.</p>
 </div>

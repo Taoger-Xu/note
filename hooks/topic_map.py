@@ -5,6 +5,7 @@ import re
 
 import yaml
 from mkdocs.utils import get_relative_url
+from mkdocs.plugins import event_priority
 
 # id, title, short description, x, y, width, height
 NODES = [
@@ -29,17 +30,25 @@ EXTRA_TOPICS = [
     ('training-systems', '训练系统 / 分布式', '并行训练、显存与计算效率'),
     ('computer-systems', '计算机系统', '操作系统、体系结构与 GPU'),
     ('courses', '课程笔记', '课程讲义、实验与项目'),
+    ('blog', 'Blog 文章', '博客随笔与技术记录'),
     ('other', '其他文章', '尚未设置主题的文章'),
 ]
 TITLES = {n[0]: n[1] for n in NODES + EXTRA_TOPICS}
 ARTICLES = {}
 
 
+@event_priority(-100)
 def on_files(files, config):
     """Rebuild the index on every build, including mkdocs serve rebuilds."""
     global ARTICLES
     ARTICLES = {key: [] for key in TITLES}
-    for file in files.documentation_pages():
+    # Material rewrites post URLs at priority -50 and excludes posts from
+    # ordinary navigation. Index its published posts after those URLs settle.
+    blog = config.plugins.get('material/blog') or config.plugins.get('blog')
+    published_posts = {post.file.src_uri for post in blog.blog.posts} if blog else set()
+    for file in files.documentation_pages(inclusion=lambda _: True):
+        if file.src_uri.startswith('blog/') and file.src_uri not in published_posts:
+            continue
         if file.src_uri in ('index.md', 'topics/index.md'):
             continue
         source = Path(file.abs_src_path).read_text(encoding='utf-8-sig')
@@ -55,7 +64,12 @@ def on_files(files, config):
             topics = [topics]
         if not isinstance(topics, list):
             raise ValueError(f'{file.src_uri}: topics must be a list or a topic id')
-        if file.src_uri.startswith('course/'):
+        if file.src_uri in published_posts:
+            topics = topics + ['blog']
+            categories = {str(category).lower() for category in meta.get('categories', [])}
+            if categories & {'ics', 'cpp', 'modern cpp', 'linker', 'os', 'c', 'cuda', 'hpca', 'ysyx'}:
+                topics = topics + ['computer-systems']
+        if file.src_uri.startswith(('course/', 'blog/posts/course/')):
             topics = topics + ['courses']
         if file.src_uri.startswith(('course/cmu15-213/', 'course/mit 6.s081/')):
             topics = topics + ['computer-systems']

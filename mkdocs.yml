@@ -69,6 +69,12 @@ plugins:
   - offline: # enable searching offline
       enabled: !ENV [OFFLINE, false]
   - glightbox
+  - blog:
+      post_url_format: "{slug}"
+      blog_toc: true
+      post_date_format: medium
+      post_excerpt: required
+      post_readtime_words_per_minute: 150
 extra:
   vssue: shafish  # 随便填值，主要是设置{% set vssue = config.extra.vssue %}时，vssue初始值可用
   analytics:
@@ -153,6 +159,8 @@ nav:
   - Home:
       - index.md
 
+  - Blog:
+      - blog/index.md
   - Topics: topics/index.md
   - Course:
       - course/index.md
