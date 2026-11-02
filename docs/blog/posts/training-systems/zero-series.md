@@ -5,7 +5,7 @@ date: 2026-11-01
 authors:
   - taoger
 slug: zero-series
-draft: true
+draft: false
 categories:
   - 训练系统
   - 分布式训练
