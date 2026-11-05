@@ -31,6 +31,7 @@ hide:
 <div class="home-course-grid">
 <a class="home-card home-card-featured" href="course/cs336/"><div class="home-card-meta"><span>STANFORD</span><span>LLM · 实践</span></div><h3>CS336 <span aria-hidden="true">↗</span></h3><p class="home-card-subtitle">Language Modeling from Scratch</p><p>从分词器、Transformer 到训练与评估，动手搭建语言模型，理解大模型背后的完整链路。</p><div class="home-card-footer">从零构建语言模型 <span>进入课程 →</span></div></a>
 <a class="home-card" href="course/cmu-agent/"><div class="home-card-meta"><span>CARNEGIE MELLON</span><span>AI AGENTS</span></div><h3>CMU Agent <span aria-hidden="true">↗</span></h3><p class="home-card-subtitle">11-768 · AI Agents</p><p>围绕大语言模型智能体，学习推理、规划、工具使用与多步交互，探索 Agent 的训练与构建。</p><div class="home-card-footer">大语言模型智能体 <span>进入课程 →</span></div></a>
+<a class="home-card" href="course/cs329z/"><div class="home-card-meta"><span>STANFORD</span><span>AI AGENTS</span></div><h3>CS329Z <span aria-hidden="true">↗</span></h3><p class="home-card-subtitle">Engineering AI Agents</p><p>从工程视角设计、构建和评估基于大语言模型的智能体系统。</p><div class="home-card-footer">AI 智能体工程 <span>进入课程 →</span></div></a>
 </div>
 </section>
 

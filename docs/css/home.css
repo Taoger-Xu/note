@@ -21,7 +21,7 @@
 .md-typeset .home-section-heading .home-eyebrow { margin-bottom: 8px; }
 .md-typeset .home-page h2 { margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
 .home-section-heading > span { font-size: 13px; color: var(--home-muted); }
-.home-course-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.home-course-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .home-card { display: flex; flex-direction: column; padding: 28px; border: 1px solid var(--home-line); border-radius: 14px; transition: border-color .2s, transform .2s; }
 .home-card-featured { background: var(--home-blue); }
 .home-card-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--home-muted); font: 11px/1.5 var(--md-text-font-family), sans-serif; letter-spacing: .06em; }

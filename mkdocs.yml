@@ -165,3 +165,6 @@ nav:
       - course/index.md
       - CS336: course/cs336/index.md
       - CMU Agent: course/cmu-agent/index.md
+      - CS329Z:
+          - course/cs329z/index.md
+          - Lectures: course/cs329z/lecture.md
