@@ -1,6 +1,6 @@
 ---
 title: "Uni-Agent: Train Long-Horizon Agents at Scale"
-description: 从大规模 Agentic RL 的挑战出发，理解 Uni-Agent 与 verl 的分工，以及统一任务接口和 Agent Gateway 的目标。
+description: 从任务执行、轨迹采集和训练衔接理解 Uni-Agent 的架构、组件边界与核心调用链。
 date: 2026-11-04
 authors:
   - taoger
@@ -20,172 +20,297 @@ tags:
 
 # Uni-Agent: Train Long-Horizon Agents at Scale
 
-训练一个能够完成实际任务的 Agent，需要让模型反复调用工具、观察环境、调整行动，最后根据任务结果学习。[Uni-Agent](https://github.com/verl-project/uni-agent) 建立在 verl 之上，将 Agent 执行、任务环境、轨迹采集和强化学习连接起来，目标是让长程 Agent 能够在统一框架中规模化训练。
+[Uni-Agent](https://github.com/verl-project/uni-agent) 将 Agent 执行、任务环境、轨迹采集和强化学习连接起来：Task 定义任务与评分，Agent 与环境交互，Gateway 捕获模型采样轨迹，Framework 将结果交给 verl 训练。
 
 <!-- more -->
 
-## 为什么需要 Uni-Agent？
+## 为什么需要 Uni-Agent
 
-以修复代码为例，一条训练样本可能包含完整的执行过程：
+代码修复任务的一次 rollout 可能持续数百轮：
 
 ```text
 阅读 issue → 搜索代码 → 修改文件 → 运行测试 → 根据报错继续修改
-                                                   ↓
-                                      验证结果 → 奖励 → 模型更新
+                                          ↓
+                                验证结果 → 奖励 → 参数更新
 ```
 
-这个过程包含多轮模型调用，还依赖持续存在的文件系统、工具进程和任务状态。并发运行成百上千个任务后，训练系统需要同时处理环境资源、长上下文计算、执行故障以及训练数据的正确性。
+它需要持续存在的文件系统、工具进程和多轮上下文。规模化训练还要处理环境回收、推理缓存、长尾任务、执行失败，以及采样记录的准确性。
 
-![大规模 Agentic RL 的五类挑战及应对方向](assets/uni-agent/challenges.svg)
+![大规模 Agentic RL 的挑战及应对方向](assets/uni-agent/challenges.svg)
 
-*根据本文讨论的演示截图复刻。右侧为应对方向，不表示所有能力都已在 Uni-Agent 中完整实现。*
-
-这些挑战可以分成五个层面：
-
-| 挑战 | 为什么会出现 | 需要解决什么 |
+| 问题 | 为什么需要处理 | 实现方向 |
 | --- | --- | --- |
-| 大规模沙箱 | 每个任务需要独立的文件、依赖和进程 | 环境启动、资源隔离、超时处理与回收 |
-| 长上下文推理 | 工具结果不断累积，任务可能持续上百轮 | KV cache 复用、负载均衡和长尾等待 |
-| 长上下文训练 | 长轨迹的激活和反向传播开销很大 | 并行计算、重计算、激活卸载等 |
-| Harness 接入 RL | Agent 会压缩历史、重试、分支或调用子 Agent | 准确还原模型采样轨迹并区分上下文与可训练输出 |
-| 有效训练 | 最终奖励稀疏，长轨迹难以分配信用 | 探索、奖励设计、策略滞后与优化目标 |
+| 大规模环境 | 每个任务都有独立的文件、依赖和进程 | 沙箱启动、隔离、超时与回收 |
+| 长上下文推理 | 工具等待期间，下一轮仍可能复用历史上下文 | 请求调度、KV cache 复用与卸载 |
+| 长上下文训练 | 长轨迹增加激活与反向传播开销 | 并行、重计算与卸载 |
+| Harness 接入 | 历史压缩、重试和分支会改变上下文 | 在模型调用边界采集真实 token 轨迹 |
+| 有效学习 | 奖励稀疏、轨迹长、策略版本变化 | 奖励设计、信用分配与训练优化 |
 
-例如，Agent 等待测试时暂时不调用模型，但下一轮仍需要之前的上下文。保留所有会话的 KV cache 会占用大量显存；驱逐缓存后，又要付出重新 prefill 的成本。因此，扩大吞吐需要同时考虑推理缓存、工具等待和环境资源。[官方技术介绍](https://verl-project.github.io/posts/2026-09-23-uni-agent-v0-1-0/)
+图中方向不等于当前版本已全部实现。Uni-Agent 与 verl 的分工是：**Uni-Agent 组织实际任务的交互并交付训练数据；verl 负责优势估计、策略损失和分布式参数更新。**
 
-### 已经有 verl，为什么还需要一层框架？
+verl 本身已有多轮 Agent Loop 接口；Uni-Agent 进一步抽出任务、工具、环境和 harness 接入的公共工程，使评测与训练可以复用同一套交互栈。
 
-verl 已经提供多轮 rollout 接口，可以通过自定义 `AgentLoopBase` 调用模型、工具和环境，再返回训练所需的 token 与 mask。它具备训练 Agent 的基础能力。[verl Agent Loop 文档](https://verl.readthedocs.io/en/latest/advance/agent_loop.html)
+## 如何组织整体架构
 
-Uni-Agent 将 Agent 运行和训练接入所需的公共工程抽出来：任务如何启动，工具在哪里执行，沙箱怎样释放，现有 harness 怎样连接模型服务，以及运行过程如何形成训练轨迹。开发者可以复用这些组件，减少每个任务重复搭建基础设施的工作。
+![统一任务与统一 Gateway 的目标](assets/uni-agent/goals.svg)
 
-可以把两者的分工理解为：**verl 提供模型优化和分布式训练底座，Uni-Agent 在其上组织实际任务的交互过程，并把执行结果交付给训练系统。**
+项目将任务执行与模型调用拆开：环境操作经过 Sandbox，模型请求经过 Gateway。Framework 在任务结束后关联评分与轨迹。
 
-## 项目目标：All in One Stack
-
-![Uni-Agent 的统一任务与统一 Gateway 目标](assets/uni-agent/goals.svg)
-
-*根据本文讨论的演示截图复刻。Shell、Browser、Desktop 代表统一框架面向的任务方向；图中的 harness 名称是接入示例，具体支持范围以项目当前文档为准。*
-
-这张图从研究与应用两个角度解释了“统一”：研究侧希望用同一组抽象表达不同任务，应用侧希望让已有 Agent harness 接入同一套训练基础设施。
-
-### 统一任务和交互环境
-
-代码 Agent 使用 Shell，网页 Agent 操作 Browser，桌面 Agent 则需要截图、鼠标和键盘。它们的动作与观察不同，但都包含任务初始化、模型决策、环境交互和结果验证。
-
-Uni-Agent 将这些职责拆成可组合的接口：
-
-| 组件 | 负责什么 |
-| --- | --- |
-| Agent | 解决任务的策略与执行循环 |
-| Tool | 模型能够调用的具体动作 |
-| Task | 任务生命周期、数据、验证与奖励 |
-| Sandbox | 执行环境、文件和进程管理 |
-| Gateway | 模型协议适配与 token 级轨迹采集 |
-| Framework | 会话编排、故障隔离与训练数据交付 |
-
-通过这些边界，替换沙箱后端不必重新编写 Agent 策略，增加任务也可以复用已有工具与运行框架。[组件职责说明](https://github.com/verl-project/uni-agent/blob/main/CONTRIBUTING.md)
-
-统一的接口还为多模态信息和多 Agent 协作提供扩展空间。不过，不同环境仍需要自己的工具、观察表示和验证器；接口统一并不意味着所有任务已经开箱即用。
-
-### 统一 Gateway，接入已有 Agent harness
-
-成熟的 harness 已经包含提示词、工具、记忆、重试和上下文管理。为了训练重新实现它，成本较高，而且细节变化可能改变模型行为。
-
-Uni-Agent 的目标是让兼容的 harness 通过熟悉的模型 API 接入 Gateway：
-
-```text
-Task / Sandbox 中的 Agent harness
-                ↓ 模型 API 请求
-         Uni-Agent Gateway
-                ↓
-      verl 管理的推理后端
-                ↓
-     token 轨迹与任务奖励 → RL 训练
+```mermaid
+flowchart TD
+    Entry["推理入口 / verl 训练入口"] --> Framework["Framework<br/>并发调度、失败隔离、结果交付"]
+    Framework --> Runner["Task Runner<br/>解析配置、注入模型端点"]
+    Runner --> Task["Task<br/>管理一次任务的完整生命周期"]
+    Task --> Agent["Agent<br/>解决问题"]
+    Task --> Sandbox["Sandbox<br/>执行环境与文件系统"]
+    Task --> Reward["Reward / Verification<br/>检查结果并评分"]
+    Agent --> Tools["Toolbox / Tools<br/>白盒 Agent 的动作"]
+    Tools --> Sandbox
+    Agent -->|黑盒 harness 执行| Sandbox
+    Agent -->|模型请求，黑盒由其进程发起| Gateway["Gateway<br/>协议适配、Session、轨迹捕获"]
+    Gateway --> Backend["模型推理后端"]
+    Gateway --> Trajectory["Token 级 Trajectory"]
+    Trajectory --> Framework
+    Task -->|TaskResult| Framework
+    Framework --> TQ["TransferQueue"]
+    TQ --> Trainer["verl Trainer<br/>优势估计、损失计算、参数更新"]
 ```
 
-这里的“黑盒接入”指保留 harness 内部执行逻辑，通过模型调用边界采集数据；被更新的仍是接入的模型参数。外部模型 API 可以用于评测，但不会因此获得对外部模型权重的训练能力。[Gateway 文档](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
+上图展示 Gateway 管理的执行路径。普通 API 推理可直接运行 Task，让 Agent 请求外部模型服务，不必经过 Gateway 和 TransferQueue。外部 API 可用于评测；参数训练需要可更新权重的模型后端。
 
-Gateway 的关键工作是保留真实采样的 token、mask 和 log probability，并处理上下文变化。仅保存最终对话再重新 tokenize，可能因为工具调用解析、解码与编码而偏离原始采样序列；历史压缩和分支还会使多次请求无法直接拼接。正确的轨迹记录是训练有效性的前提。[verl 对 token 一致性的说明](https://verl.readthedocs.io/en/latest/advance/agent_loop.html)
+### 组件与目录
 
-### 缩小训练与推理之间的 harness 差异
+| 组件 / 目录 | 为什么需要 | 如何实现 |
+| --- | --- | --- |
+| `tasks/` | 不同任务有不同环境与成功标准 | Task 组合 Sandbox、Agent 和验证逻辑，返回 `TaskResult` |
+| `agents/` | 求解策略与任务评分需要独立变化 | 自己实现交互循环，或启动外部 harness |
+| `tools/` | 模型需要结构化的动作接口 | Tool 定义动作；Toolbox 绑定环境、提供 schema 并分发调用 |
+| `sandbox/` | 环境部署方式不应绑定 Agent | 统一命令执行、文件操作和生命周期接口 |
+| `gateway/` | 兼容已有模型 API，并准确采集训练轨迹 | 协议适配、Session 管理、消息编解码和 token 缓冲 |
+| `framework/` | 并发执行和训练数据交付需要统一组织 | 调度 Runner、隔离失败、关联奖励、写入 TransferQueue |
+| `agent_aware_router/` | 多推理副本的负载和缓存状态不同 | 采集状态，由路由策略选择副本 |
+| `logging/`、`rl_insight/` | 长任务和分布式执行难以定位问题 | 日志上下文、运行产物、观测信号与追踪 |
+| `examples/`、`tests/`、`docs/` | 配置与行为需要可复现、可验证 | 运行配方、回归测试和使用说明 |
 
-如果模型在简化循环中训练，部署时却使用另一套提示词、工具和记忆管理方式，训练收益可能无法完整迁移。复用同一套交互栈，可以减少这类差异，也便于在相同条件下评测训练前后的变化。
+## 任务执行：Task、Agent、Tool 与 Sandbox
 
-Uni-Agent 因此将执行、评测和训练放在可复用的运行框架中，并提供可运行配方作为实验起点。其统一框架面向的核心问题是：**让真实 Agent 的任务执行过程，能够准确、可追踪且高效地成为模型学习的数据。**
+### 为什么要拆分这些职责
 
-## 整体架构：从任务执行到训练轨迹
+同一个代码修复任务可以使用 ReAct 或 Claude Code，也可以运行在 Docker 或远程沙箱。任务评分、求解策略和基础设施各自变化，因此分别由 Task、Agent 和 Sandbox 管理。
 
-![Uni-Agent 的 Framework、Task Runner、Gateway 与工具执行架构](assets/uni-agent/architecture.svg)
+![Framework、Task Runner、Gateway 与工具执行架构](assets/uni-agent/architecture.svg)
 
-*根据演示截图复刻。图中 Agent 和沙箱名称用于说明可插拔的组织方式，具体可用实现以项目当前版本为准。*
+*该图由演示截图复刻，右侧是白盒 Agent 的局部展开。图中的工具与后端名称表示扩展方向，具体支持范围以代码为准。*
 
-这张图分为两部分：左侧展示任务如何被分发和执行，右侧展开白盒 Agent 内部的模型交互与工具执行。右侧是局部放大，不是左侧之后的额外流水线阶段。
+### 如何执行一次任务
 
-### 左侧：Framework 编排任务，Sandbox 承载环境
-
-输入数据进入 Framework 后，由 FrameworkWorker 驱动任务执行。Task Runner 将样本对应的 Agent、Sandbox 和验证流程组织成一个完整 episode；多个 Worker 可以并发推进不同会话。
-
-Agent 负责决定如何解决任务。黑盒接入可以复用 Claude Code、Mini-SWE-Agent 等已有 harness；白盒接入则允许直接定制交互循环、工具和错误处理。两种方式都需要通过 Sandbox 操作任务环境，执行命令、读写文件并保留任务状态。
-
-Sandbox 将环境能力与后端实现分离。图中的 veFaaS、YuanRong、Modal 表示不同基础设施选择，上层尽量通过一致的接口执行操作。图中的 `Sandbox.exec()` 和 `Sandbox.mount()` 表达命令执行与文件挂载等能力；具体方法及其支持范围需要以所用后端的接口为准。
-
-Gateway Manager 管理模型调用会话。任务运行过程中，Agent 的模型请求经过对应的 Gateway，形成可以追踪的 token 级记录；任务验证产生奖励，Framework 再组织输出并交付给训练侧。图中 Sandbox 与左侧模块之间的连线是简化示意，不能理解为工具执行结果直接就是训练轨迹。
-
-### 右侧：模型请求和工具执行走两条路径
-
-白盒 Agent 的 Interaction System 维护交互循环与上下文，Toolbox 提供可调用工具。一次典型循环包含两条不同的路径：
-
-```text
-模型决策：Interaction System → Agent Gateway → 模型推理后端
-环境执行：Interaction System → Toolbox → Tool → Sandbox
-```
-
-模型生成工具调用后，交互系统分发动作；工具在环境中执行，再将观察结果送回上下文，发起下一轮模型调用。Stateful Shell 保留命令执行状态，Browser 和 Desktop 提供网页与桌面操作能力，MCP 则是连接外部工具的一种协议入口。这些工具的底层实现不必完全相同，也不一定都依赖相同的 Sandbox 操作。
-
-**Gateway 负责模型调用与轨迹，Sandbox 负责环境执行与状态。** Gateway 本身不生成 token，实际生成由 vLLM、SGLang 等推理后端完成；它也不代替工具执行器。区分这两条路径，才能理解框架如何同时接入不同 harness、工具和运行环境。[Gateway 职责说明](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
-
-以代码修复为例，Worker 启动任务后，Agent 先经 Gateway 请求模型，模型提出 Shell 或编辑工具调用，工具在 Sandbox 中执行。测试结果作为观察返回 Agent；任务结束时，Task 负责验证与奖励，Gateway 提供采样轨迹，Framework 将二者关联起来。这就把一次实际任务执行连接到了 RL 更新所需的数据。
-
-## Gateway 设计：Message In，Training Trajectories Out
-
-![Gateway 在 message 接口和 token 推理接口之间组织训练轨迹](assets/uni-agent/gateway-design.svg)
-
-*根据演示截图复刻。TrajectoryBuffer 表示轨迹缓冲的概念，具体类名与接口以项目版本为准。*
-
-Gateway 的核心目的之一，是将 Agent 在线交互中产生的模型调用组织成训练侧可以消费的 token 级轨迹。它连接两种接口：**面向 Agent 使用 messages，面向推理后端使用 token IDs。**
-
-### 两侧接口：兼容现有 Agent，保留真实采样记录
-
-Agent 侧继续使用熟悉的 OpenAI 或 Anthropic 兼容接口。图中给出的会话路径是 `/sessions/{id}/v1/chat/completions` 和 `/sessions/{id}/v1/messages`，请求仍然包含对话内容、工具定义与采样参数。
-
-推理侧则使用 token-in/token-out 的生成接口，概念上可以写成：
+内置 SWE-Bench Task 的主流程如下：
 
 ```python
-result = backend.generate(prompt_ids, sampling_params)
+async with self.build_sandbox() as sandbox:
+    agent = self.build_agent()
+    agent_result = await agent.run(
+        sandbox=sandbox,
+        messages=self.config.prompt,
+        workdir="/testbed",
+    )
+    result = await compute_reward(self.config.metadata, sandbox)
+
+return TaskResult(
+    reward=float(result["resolved"]),
+    accuracy=float(result["resolved"]),
+    finished=agent_result.finished,
+    extra_info=result,
+)
 ```
 
-Gateway 将消息编码为模型输入，并保留推理后端返回的实际采样 token 和相关概率，再将结果转换为 Agent 能使用的回复。这样，harness 可以继续操作 messages，训练侧也能获得准确的采样记录，无需仅依赖最终对话文本重新构造输出 token。[Gateway 文档](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
+这是省略日志和分支后的主干。Task 管理 Sandbox 生命周期；Agent 使用已启动的环境。SWE 评分在 Sandbox 中运行测试，Task 再将结果转换为奖励。项目没有要求所有任务继承统一的 Reward 基类。
 
-### Session：一次任务可以包含多条轨迹
+`TaskResult` 的字段各有用途：
 
-一次任务执行通常对应一个 Gateway session，其中包含多次模型调用。对于不断追加的对话，新的调用可以延续已有轨迹；如果 harness 压缩、裁剪或改写历史，新的上下文不一定兼容原来的 token 序列，就需要按规则拆分或回退处理。
+- `reward`：任务结果奖励。
+- `accuracy`：评估准确率。
+- `finished`：是否正常完成，允许 `True`、`False` 或未报告的 `None`。
+- `extra_info`：评估报告、错误等结构化上下文，不直接作为聚合指标。
 
-因此，**一个 session 不一定只产生一条轨迹**。Session 关联同一次任务的调用，轨迹则描述可以一致组织的 token 序列；二者不是同一个粒度。
+### 白盒与黑盒 Agent
 
-### 轨迹缓冲：记录训练真正需要的信息
+| 类型 | 如何运行 | 示例 |
+| --- | --- | --- |
+| 白盒 | Uni-Agent 控制模型请求、工具调用、上下文和停止条件 | ReAct、MemAgent |
+| 黑盒 | 通过 Sandbox 启动外部进程，由 harness 控制内部循环 | Claude Code、Codex、OpenClaw |
 
-| 字段 | 用途 |
+ReAct 的两条调用路径是：
+
+```text
+模型决策：Agent → Gateway → 模型后端
+环境执行：Agent → Toolbox → Tool → Sandbox
+```
+
+工具结果加入消息后，Agent 再次请求模型。Toolbox 负责参数校验、动作分发和工具生命周期。黑盒 harness 通常使用自己的工具系统，不必经过 Uni-Agent 的 Toolbox。
+
+Sandbox 提供 `exec()`、`read_file()`、`write_file()` 等接口。Docker 提供本地容器隔离，Modal、veFaaS、E2B 等提供远程环境；`local` 直接执行宿主机命令，不提供隔离。
+
+### 如何通过配置组合组件
+
+```yaml
+- name: swe_bench
+  sandbox:
+    provider: docker
+  agent:
+    name: react
+    tools:
+      - name: stateful_shell
+      - name: str_replace_editor
+      - name: submit
+```
+
+注册表根据名称选择实现。`TaskConfigResolver` 依次合并任务级默认配置与样本级配置，最后注入运行时模型端点、API key 和模型名称。嵌套字典递归合并，列表与标量由样本值覆盖；样本不能替换当前运行绑定的模型端点。
+
+## Gateway：从 Messages 到训练轨迹
+
+### 为什么需要 Gateway
+
+已有 harness 包含自己的提示词、工具、记忆和重试逻辑。通过兼容的模型 API 接入，可以保留这些行为，并在模型调用边界记录训练数据。
+
+最终对话文本不足以还原真实采样：重新 tokenize 可能改变 token 序列，历史压缩、分支和工具上下文也不能直接拼接。Gateway 因此保存实际生成的 token、mask 和 log probability。
+
+![Gateway 在消息接口与 token 接口之间组织训练轨迹](assets/uni-agent/gateway-design.svg)
+
+### 如何处理模型请求
+
+```text
+GatewayManager
+    管理 Gateway actor 池，定位 Session 所属 actor
+        ↓
+GatewayActor（gateway.py）
+    接收 HTTP 请求，管理 Session 与 policy 绑定
+        ↓
+Adapters
+    将 OpenAI / Anthropic 请求转换为内部格式
+        ↓
+GatewaySession + MessageCodec
+    管理多轮上下文、编码模型输入、记录采样 token
+        ↓
+模型后端
+    生成结果返回 Session，再由 Adapter 包装成 JSON / SSE
+```
+
+`gateway.py` 是服务入口，主要路由包括：
+
+```text
+/sessions/{session_id}/v1/chat/completions
+/sessions/{session_id}/v1/responses
+/sessions/{session_id}/v1/messages
+```
+
+以 `_handle_openai_chat_completions()` 为例：
+
+1. 根据 `session_id` 找到 Session 和绑定的 policy。
+2. Adapter 转换请求，处理采样参数与覆盖权限。
+3. `session.run_generation()` 调用对应后端并记录轨迹。
+4. Adapter 将结果包装为普通响应或流式响应。
+
+多轮状态主要位于 `session/session.py`，消息编解码位于 `session/codec.py`。Gateway 本身不执行工具；token 的实际生成由模型后端完成。
+
+### 如何表示训练轨迹
+
+`SessionHandle` 向 Runner 提供 `session_id` 和会话专属 `base_url`。任务结束后，`finalize_session()` 返回一条或多条 `Trajectory`；异常时调用 `abort_session()`。
+
+| `Trajectory` 字段 | 用途 |
 | --- | --- |
-| `prompt_ids` | 保存该条轨迹的输入 token |
-| `response_ids` | 保存后续序列，可能同时包含模型输出和追加的工具上下文 |
-| `response_mask` | 标明哪些位置属于可训练的模型输出，工具返回等上下文通常不参与策略损失 |
-| `logprobs` | 保存实际采样输出的行为策略 log probability，供 RL 目标使用 |
+| `prompt_ids` | 轨迹初始输入 token |
+| `response_ids` | 模型输出与后续插入的上下文 token |
+| `response_mask` | 区分模型输出与插入上下文 |
+| `response_logprobs` | 与后续序列对齐的采样 log probability |
+| `reward_score`、`reward_metrics` | Framework 或奖励 Worker 附加的评分信息 |
+| `finished` | Framework 附加的任务完成状态 |
+| `multi_modal_data` | 多模态输入数据 |
 
-这些字段表达的是概念上的训练记录，最终格式由具体的数据契约决定。任务结束后，Framework 将轨迹与 Task 验证得到的奖励关联，通过 TransferQueue 等数据通道交给 verl。**Gateway 负责模型协议和轨迹，Task 负责奖励，verl 负责参数更新。**
+例如：
+
+```text
+后续序列：模型工具调用 → 工具返回结果 → 模型继续生成
+mask：         1              0              1
+```
+
+`response_ids` 不全是需要计算策略损失的模型输出。工具结果属于后续上下文，通过 mask 区分。
+
+一个 Session 可以包含多条轨迹：上下文压缩、改写或分支可能使后续调用无法延续原来的 token 链。项目提供 Chain 与 Tree 两种轨迹组织方式，最终都输出统一的 `Trajectory`。
+
+## Framework：将执行结果交给 verl
+
+### 为什么需要独立编排层
+
+Task 的职责是完成一个任务；训练需要对一批样本并发采样，隔离单个会话的失败，并将任务评分与 Gateway 轨迹关联。异步训练还需要让 rollout 和参数更新独立推进。
+
+### 如何串起调用链
+
+```text
+verl / 推理入口
+    → AgentFrameworkRolloutAdapter
+    → AgentFrameworkWorker / GatewayAgentFramework
+    → 创建 Gateway Session
+    → Agent Runner（默认 run_task）
+    → TaskConfigResolver → Task.run()
+    → 返回 TaskResult
+    → finalize Session，获得 Trajectory
+    → 轨迹选择与后处理、奖励衔接
+    → 写入 TransferQueue
+    → verl 读取数据并训练
+```
+
+关键代码入口：
+
+| 文件 | 作用 |
+| --- | --- |
+| `framework/entry.py` | 创建 Gateway Manager 和 Framework Worker，对接 verl rollout 接口 |
+| `framework/framework.py` | 批量调度、并发限制、会话执行、轨迹处理与数据交付 |
+| `framework/task_runner.py` | 解析样本配置，注入 Session 模型端点并运行 Task |
+| `gateway/manager.py` | 管理 Gateway actor 池和 Session 归属 |
+
+任务评分与采样数据来自两个入口：
+
+```text
+TaskResult：reward、accuracy、finished、评估详情
+Trajectory：token、mask、logprob、多模态数据
+                         ↓
+                 Framework 关联两者
+```
+
+最终奖励取决于配置：Framework 可使用 Runner 奖励，也可交给 verl Reward Loop Worker 处理。TransferQueue 解耦 rollout 与训练，Trainer 从队列读取完成记录，再进行优势估计、损失计算和参数更新。
+
+Runner 异常时，Framework 中止对应 Session；单个 Session 失败不会直接丢弃同一样本其他成功会话的结果。
+
+## Router 与运行观测
+
+### 为什么需要
+
+多轮任务在工具执行期间暂停模型调用，再次请求时可能复用已有 KV cache。多副本环境还存在负载差异，单纯均分请求未必能获得最佳吞吐。
+
+### 如何实现
+
+`agent_aware_router/` 通过 collectors 收集状态，由 store 保存，再由策略选择推理副本。它负责请求落到哪个副本；Gateway 负责请求属于哪个 Session，以及如何记录轨迹。
+
+`logging/` 提供共享日志上下文与运行产物，`rl_insight/` 接入观测信号。它们帮助关联任务、会话和训练阶段，定位长尾与失败。
+
+## 源码阅读顺序
+
+先追踪一条任务，再理解分布式编排：
+
+1. `tasks/swe_bench/task.py`：Task 如何组合环境、Agent 和评分。
+2. `agents/react/agent.py`：模型与工具的交互循环。
+3. `tools/base.py`、`sandbox/docker.py`：动作如何落到环境。
+4. `framework/task_runner.py`、`tasks/config.py`：样本与配置如何进入任务。
+5. `gateway/gateway.py`：一次模型请求的服务入口。
+6. `gateway/session/session.py`、`codec.py`：上下文与 token 轨迹。
+7. `framework/framework.py`、`entry.py`：并发、失败处理和训练衔接。
 
 ## 参考资料
 
 - [Uni-Agent 项目仓库](https://github.com/verl-project/uni-agent)
+- [组件职责与贡献指南](https://github.com/verl-project/uni-agent/blob/main/CONTRIBUTING.md)
+- [核心抽象](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/index.md)
+- [Gateway 与轨迹](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
 - [Uni-Agent 官方技术介绍](https://verl-project.github.io/posts/2026-09-23-uni-agent-v0-1-0/)
-- [Uni-Agent Gateway 与轨迹文档](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
 - [verl Agent Loop 文档](https://verl.readthedocs.io/en/latest/advance/agent_loop.html)
