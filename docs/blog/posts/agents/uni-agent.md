@@ -290,7 +290,22 @@ flowchart TD
       - name: submit
 ```
 
-注册表根据名称选择实现。`TaskConfigResolver` 依次合并任务级默认配置与样本级配置，最后注入运行时模型端点、API key 和模型名称。嵌套字典递归合并，列表与标量由样本值覆盖；样本不能替换当前运行绑定的模型端点。
+从 [`SWEBenchTask`](https://github.com/verl-project/uni-agent/blob/main/uni_agent/tasks/swe_bench/task.py) 开始读，重点理解一句话：
+
+**它将“一个代码修复样本、一个执行环境、一个 Agent 和一个测试评分器”组装成一次完整任务。**
+
+当前阅读版本的整个文件只有 74 行，主流程是：
+
+```text
+读取任务配置
+    → 启动 Sandbox
+    → Agent 修改代码，或直接应用标准补丁
+    → 在同一 Sandbox 中运行评估
+    → 生成 TaskResult
+    → 清理 Sandbox 后返回
+```
+
+具体看 `run()`：从 `cfg.metadata` 取出样本，用 `async with self.build_sandbox()` 管理环境；通常调用 `agent.run(..., workdir="/testbed")` 修复代码，Oracle 模式则直接应用样本中的标准补丁。随后调用 `compute_reward()` 运行评估，将 `resolved` 转成 `reward` 和 `accuracy`，并返回 `TaskResult`。退出 `async with` 时先清理环境，再把结果交给调用方。
 
 ## Gateway：从 Messages 到训练轨迹
 
@@ -459,6 +474,212 @@ flowchart TD
 
 `logging/` 提供共享日志上下文与运行产物，`rl_insight/` 接入观测信号。它们帮助关联任务、会话和训练阶段，定位长尾与失败。
 
+## 如何接入 verl
+
+Uni-Agent 通过 verl 已有的 `agent_loop_manager_class` 扩展点接入，接管 Agent rollout 的执行与结果交付，继续复用 verl 的模型服务、ReplayBuffer、优势估计、参数更新和权重同步。
+
+以下调用链基于本项目锁定的 verl 子模块版本 `2bc6ac46043e31855cea194236ff7548c91817c8`。
+
+### 为什么通过 AgentLoopManager 接入
+
+Trainer 需要提交一批样本，并获得符合训练契约的数据，但不需要了解具体 Agent 如何调用工具、使用哪种沙箱。将执行入口与训练算法分开，可以在保留训练流程的同时替换任务与 harness。
+
+这一扩展点包含两部分契约：
+
+- **控制接口**：提供 `create(...)` 工厂入口和 `generate_sequences(batch)` 方法。
+- **数据接口**：将 rollout 结果按 verl 所需字段和状态写入 TransferQueue。
+
+Uni-Agent 的适配器不继承默认 `AgentLoopManagerTQ`，而是提供兼容的调用接口。训练数据通过队列交付，不通过 `generate_sequences()` 的返回值交付。
+
+### 配置与初始化
+
+训练脚本指定适配器的完整 Python 类路径：
+
+```bash
+trainer.use_v1=True \
+trainer.v1.trainer_mode=colocate_async \
+++actor_rollout_ref.rollout.agent.agent_loop_manager_class=uni_agent.framework.entry.AgentFrameworkRolloutAdapter
+```
+
+两个配置相互独立：`trainer_mode` 选择训练调度方式，`agent_loop_manager_class` 选择 rollout 执行入口。
+
+verl 的 `TaskRunnerV1.run()` 依次初始化 TransferQueue、Trainer 和 AgentLoopManager，再调用 `trainer.fit(manager)`。这里的 `TaskRunnerV1` 启动整个训练作业，与 Uni-Agent 执行单个样本的 `run_task()` 不同。
+
+`init_agent_loop_manager()` 动态加载配置中的类；未配置时使用默认 `AgentLoopManagerTQ`。随后调用：
+
+```python
+manager = agent_loop_manager_cls.create(
+    config=config,
+    llm_client=trainer.get_llm_client(),
+    teacher_client=trainer.get_teacher_client(),
+    reward_loop_worker_handles=trainer.get_reward_handles(),
+)
+```
+
+`AgentFrameworkRolloutAdapter.create()` 创建两组组件：
+
+```text
+AgentFrameworkRolloutAdapter
+├── GatewayManager
+│   └── GatewayActor 池：使用 verl 注入的 llm_client
+└── AgentFrameworkWorker（Ray actor）
+    └── GatewayAgentFramework：调度 Runner、处理轨迹与奖励
+```
+
+Gateway 的模型后端直接使用 Trainer 提供的客户端，因此可以继承对应训练模式的生成行为。奖励 Worker 句柄也由 verl 注入；当前适配器不支持非空的 `teacher_client`。
+
+### 样本提交与训练数据交付
+
+Trainer 为样本分配 `uid`、注册 TransferQueue 的 `pending` 状态，然后调用：
+
+```python
+agent_loop_manager.generate_sequences(batch)
+```
+
+适配器将请求转发给 Framework Worker，立即返回 `None`：
+
+```python
+self.framework_worker.generate_sequences.remote(prompts)
+```
+
+Framework 创建 Session，调用配置中的 Runner。默认 `run_task()` 解析配置并运行 Task；Agent 的模型请求经过 Gateway，最终调用 verl 的 `llm_client.generate()`。
+
+```mermaid
+sequenceDiagram
+    participant V as verl TaskRunnerV1
+    participant T as verl Trainer
+    participant A as Uni-Agent Adapter
+    participant F as Framework Worker
+    participant G as Gateway
+    participant R as Runner / Task / Agent
+    participant Q as TransferQueue
+
+    V->>T: 初始化 Trainer
+    V->>A: create(config, llm_client, reward_handles)
+    A->>G: 创建 Gateway，注入 llm_client
+    A->>F: 创建 Framework Worker
+    A-->>V: 返回 Adapter
+    V->>T: fit(Adapter)
+
+    T->>Q: 注册 pending 样本
+    T->>A: generate_sequences(batch)
+    A->>F: 远程提交执行
+    A-->>T: 返回 None
+
+    F->>G: 创建 Session
+    F->>R: 执行 Runner
+    R->>G: Agent 模型请求
+    G->>G: 调用 verl 客户端并记录 token
+    G-->>R: 模型响应
+    R-->>F: TaskResult
+    F->>G: finalize Session
+    G-->>F: Trajectory
+    F->>Q: 写入训练字段与状态
+    T->>Q: ReplayBuffer.sample()
+    Q-->>T: 可训练数据
+    T->>T: 优势估计与参数更新
+```
+
+图中模型请求可能重复多轮；ReplayBuffer 也可能提前开始等待数据，图示表达依赖关系，不表示异步执行的唯一时间顺序。
+
+Framework 将轨迹转换为 verl 的数据契约：
+
+| Uni-Agent 数据 | TransferQueue 字段 |
+| --- | --- |
+| `prompt_ids`、`response_ids` | `prompts`、`responses`，并构造 `input_ids` 等张量 |
+| `response_mask` | `response_mask`、`loss_mask` |
+| `response_logprobs` | `rollout_log_probs` |
+| 标量 `reward_score` | `rm_scores`，放在最后一个 response 位置 |
+| 采样权重版本范围 | `min_global_steps`、`max_global_steps` 标签 |
+
+Trainer 从 ReplayBuffer 获取可采样记录，再使用原有训练流程。最终奖励仍受奖励拓扑配置影响，例如后续 colocated reward pass 可能重新计算 `rm_scores`。
+
+源码入口：
+
+- `verl/verl/trainer/main_ppo.py`：动态加载并创建 rollout 管理器。
+- `uni_agent/framework/entry.py`：适配器、Gateway 与 Framework Worker 的组装。
+- `uni_agent/framework/framework.py`：执行任务并转换、写入训练记录。
+- `verl/verl/trainer/ppo/v1/trainer_base.py`：提交样本、从 ReplayBuffer 采样并训练。
+
+### 如何利用 verl：Fully Async 与 Partial Rollout 缓解长尾
+
+#### 为什么需要
+
+Agent 任务的交互轮数与工具耗时差异很大。同步训练必须等待整批 rollout 完成，少量长任务就可能让其他资源空闲。异步训练消费已完成的样本组，未完成任务跨更新继续执行，从而减少整批同步屏障带来的等待。
+
+![全异步训练中 rollout、参数更新与后续 batch 的衔接](assets/uni-agent/fully-async-training.svg)
+
+*根据演示截图复刻。横条表示单条数据的 rollout；暂停与参数同步的具体范围取决于训练模式。*
+
+三个概念需要分开：
+
+| 概念 | 决定什么 |
+| --- | --- |
+| Colocate | 训练与推理是否共享 GPU |
+| Fully Async | 采样与训练是否独立推进、持续重叠 |
+| Partial Rollout | 未完成生成能否在中断后保留 token 前缀并继续 |
+
+Colocate Async 同样支持 Partial Rollout。它不是始终在同一组 GPU 上同时训练和推理，而是让任务状态持续存在，GPU 在不同阶段切换用途。
+
+#### Colocate Async 如何切换
+
+`PPOTrainerColocateAsync.get_llm_client()` 返回 `FullyAsyncLLMServerClient`，经适配器注入 Gateway。当 ReplayBuffer 凑够当前更新需要的数据时：
+
+```text
+on_sample_end()
+    → abort_replicas()：中断未完成生成并暂停接收处理
+    → sleep_replicas()：释放推理权重和 KV cache 设备内存
+    → Trainer 执行参数更新
+    → on_step_end()
+    → update_weights(global_steps)
+    → resume_generation_replicas()
+```
+
+未完成任务的 Sandbox、消息和 Gateway Session 可以继续保留。释放 KV cache 不等于丢弃任务；恢复时可以根据保留的 token 重新 prefill。
+
+#### Partial Rollout 如何续生成
+
+`FullyAsyncLLMServerClient.generate()` 在内部累积输出。一次底层生成被中断后，它保留已生成 token 与对应 logprob，以“原 prompt + 已生成 token”再次请求，并扣减剩余生成预算。
+
+```text
+θ₀：prompt → 生成前 300 token → 被中断
+                         ↓
+                  训练并同步 θ₁
+                         ↓
+θ₁：prompt + 前 300 token → 生成剩余部分
+                         ↓
+                合并 token 与各自的 logprob
+```
+
+ReAct 仍然只等待一次 `model.query()`；中断与续生成被 verl 客户端隐藏，Gateway 获得合并后的输出。因此黑盒 harness 也不需要自行实现恢复逻辑，但 HTTP 超时必须能容纳等待时间。
+
+这里的 Partial Rollout **不表示未完成前缀立即参与训练**。当前 Uni-Agent Framework 正常路径仍等待 Runner 返回，再 finalize Session 并交付轨迹。它也不同于上下文压缩导致的轨迹拆分，或 `mask_unfinished_episode` 的损失掩码。
+
+#### Separate Async 如何持续重叠
+
+`PPOTrainerSeparateAsync` 使用独立 rollout 资源池，让推理与训练重叠；同步权重仍需协调，并非永不暂停。它还支持将空闲训练 GPU 临时切换为推理副本：
+
+```text
+数据不足：训练 GPU 临时参与 rollout → 加入负载均衡器
+数据足够：移出路由 → 中断局部生成 → sleep → 返回训练
+```
+
+禁用 `actor_rollout_ref.hybrid_engine` 后，只由独立推理池提供 rollout。具体资源、批量和同步后端必须匹配所选模式。
+
+#### 长尾仍受组与策略滞后约束
+
+例如 A、B 样本组已结束，C 仍在运行：Trainer 可以使用足够的已完成组更新参数，C 的模型请求随后使用新权重继续，无需重做已完成的工具操作。但当前 Framework 会等待同一个 prompt 的各 Session 返回后写入结果，因此同组长尾仍可能阻塞该组发布。
+
+异步也引入策略滞后：同一条轨迹可能跨多个权重版本。Gateway 保留真实采样 logprob 和版本跨度；verl 的 `ReplayBufferAsync` 根据配置淘汰过旧的已完成组（`drop`），或在在途任务达到阈值时等待它们完成（`wait`）。算法侧再根据配置进行重要性修正等处理。
+
+相关源码：
+
+- `verl/verl/trainer/ppo/v1/trainer_colocate_async.py`：采样结束与 step 结束的调度回调。
+- `verl/verl/trainer/ppo/v1/trainer_separate_async.py`：独立推理池与角色切换。
+- `verl/verl/workers/rollout/llm_server.py`：`FullyAsyncLLMServerClient` 中断续生成。
+- `verl/verl/checkpoint_engine/base.py`：推理副本暂停、显存释放、权重同步与恢复。
+- `verl/verl/trainer/ppo/v1/replay_buffer.py`：可采样组选择与滞后控制。
+
 ## 源码阅读顺序
 
 先追踪一条任务，再理解分布式编排：
@@ -473,9 +694,4 @@ flowchart TD
 
 ## 参考资料
 
-- [Uni-Agent 项目仓库](https://github.com/verl-project/uni-agent)
-- [组件职责与贡献指南](https://github.com/verl-project/uni-agent/blob/main/CONTRIBUTING.md)
-- [核心抽象](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/index.md)
-- [Gateway 与轨迹](https://github.com/verl-project/uni-agent/blob/main/docs/source/concepts/gateway-and-trajectories.md)
-- [Uni-Agent 官方技术介绍](https://verl-project.github.io/posts/2026-09-23-uni-agent-v0-1-0/)
-- [verl Agent Loop 文档](https://verl.readthedocs.io/en/latest/advance/agent_loop.html)
+- [Uni-Agent 官方文档](https://uni-agent.readthedocs.io/en/latest/)
