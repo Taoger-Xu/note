@@ -20,7 +20,19 @@ tags:
 
 # Uni-Agent: Train Long-Horizon Agents at Scale
 
-[Uni-Agent](https://github.com/verl-project/uni-agent) 将 Agent 执行、任务环境、轨迹采集和强化学习连接起来：Task 定义任务与评分，Agent 与环境交互，Gateway 捕获模型采样轨迹，Framework 将结果交给 verl 训练。
+[Uni-Agent](https://github.com/verl-project/uni-agent) 围绕三个方向构建：
+
+1. **白盒框架。** 提供可修改、可扩展的框架，让用户自由构建和定制 Agent，并在黑盒 Harness 尚未覆盖的方向扩展，例如 Desktop、GUI、Audio 等多模态交互，以及 Multi-Agent 系统编排。
+2. **Agent Gateway。** 接入 Claude Code、Codex 等黑盒 Harness，复用训练与部署时的交互栈，减少“训练 Harness ≠ 推理 Harness”带来的性能损失。
+3. **Agentic RL 优化。** 面向 128K 上下文、数百轮交互和高频工具调用，优化训练效率、资源使用、奖励与稳定性，并在 SWE-Bench Verified 上取得性能提升。
+
+各组件分工如下：
+
+- **Task**：定义任务、管理生命周期并计算评分。
+- **Agent**：执行求解策略，与环境交互。
+- **Gateway**：适配模型协议，捕获 token 级采样轨迹。
+- **Framework**：编排执行，关联轨迹与任务结果，交给 verl 训练。
+- **verl**：执行优势估计、损失计算与模型参数更新。
 
 <!-- more -->
 
@@ -100,31 +112,35 @@ flowchart TD
 
 ![Framework、Task Runner、Gateway 与工具执行架构](assets/uni-agent/architecture.svg)
 
-*该图由演示截图复刻，右侧是白盒 Agent 的局部展开。图中的工具与后端名称表示扩展方向，具体支持范围以代码为准。*
-
 ### 如何执行一次任务
 
 内置 SWE-Bench Task 的主流程如下：
 
-```python
-async with self.build_sandbox() as sandbox:
-    agent = self.build_agent()
-    agent_result = await agent.run(
-        sandbox=sandbox,
-        messages=self.config.prompt,
-        workdir="/testbed",
-    )
-    result = await compute_reward(self.config.metadata, sandbox)
-
-return TaskResult(
-    reward=float(result["resolved"]),
-    accuracy=float(result["resolved"]),
-    finished=agent_result.finished,
-    extra_info=result,
-)
+```text
+SWEBenchTask.run()
+│
+├── build_sandbox()
+│   └── 根据 provider 创建 Sandbox
+│
+├── Sandbox.__aenter__()
+│   └── 启动环境
+│
+├── build_agent()
+│   └── 根据 agent.name 创建 Agent
+│
+├── agent.run(sandbox, messages, workdir)
+│   └── 在 /testbed 中修复代码
+│
+├── compute_reward(sample, sandbox)
+│   └── 运行测试并解析 resolved
+│
+├── 构造 TaskResult
+│
+└── Sandbox.__aexit__()
+    └── 停止环境，然后返回结果
 ```
 
-这是省略日志和分支后的主干。Task 管理 Sandbox 生命周期；Agent 使用已启动的环境。SWE 评分在 Sandbox 中运行测试，Task 再将结果转换为奖励。项目没有要求所有任务继承统一的 Reward 基类。
+Task 管理 Sandbox 生命周期；Agent 和评分器使用同一个已启动的环境。上述调用树展示默认的 Agent 求解路径；Oracle 模式会跳过 Agent，直接应用标准补丁后评分。
 
 `TaskResult` 的字段各有用途：
 
@@ -132,6 +148,30 @@ return TaskResult(
 - `accuracy`：评估准确率。
 - `finished`：是否正常完成，允许 `True`、`False` 或未报告的 `None`。
 - `extra_info`：评估报告、错误等结构化上下文，不直接作为聚合指标。
+
+### Task 如何调用不同 Agent
+
+`Task.run()` 组织任务环境、Agent 执行和结果验证，再通过统一的 `agent.run(sandbox, messages, workdir)` 接口调用不同 Agent。具体的推理与工具交互过程由各 Agent 实现。
+
+以白盒 ReAct Agent 为例，`agent.run()` 内部的流程是：
+
+```text
+Task 调用 agent.run()
+    → 创建 Toolbox 和模型客户端
+    → 初始化 transcript（交互历史）
+    → 循环调用 step()
+        ├── 将 transcript 发给模型
+        ├── 将模型回复加入 transcript
+        ├── 执行工具调用
+        └── 将工具结果加入 transcript
+    → 满足停止条件
+    → 清理工具与模型客户端
+    → 返回 AgentResult
+```
+
+Task 获得 `AgentResult` 后继续验证任务并返回 `TaskResult`。替换 Agent 时，Task 可以复用相同的任务环境和评分逻辑；ReAct 在框架内执行上述循环，黑盒 Agent 则可以启动外部 harness，由它管理内部交互。
+
+接入 RL 时，Gateway 捕获模型调用对应的 token 轨迹，Framework 组织任务执行并关联轨迹与评分，再将训练记录交给 verl。因此，同一套任务与 Agent 执行逻辑可以用于推理评测和 RL rollout。
 
 ### 白盒与黑盒 Agent
 
@@ -238,21 +278,40 @@ mask：         1              0              1
 
 一个 Session 可以包含多条轨迹：上下文压缩、改写或分支可能使后续调用无法延续原来的 token 链。项目提供 Chain 与 Tree 两种轨迹组织方式，最终都输出统一的 `Trajectory`。
 
-## Framework：将执行结果交给 verl
+## Framework：对接 verl 的任务分发与结果回收
 
 ### 为什么需要独立编排层
 
-Task 的职责是完成一个任务；训练需要对一批样本并发采样，隔离单个会话的失败，并将任务评分与 Gateway 轨迹关联。异步训练还需要让 rollout 和参数更新独立推进。
+Framework 对接 verl 的 rollout 请求，将任务样本分发给 Agent 执行推理和环境交互，再把执行产生的轨迹与评分组织成训练记录，交回 verl。它连接的是双向流程：
+
+```text
+verl 提供任务样本与 rollout 配置
+    → Framework 创建 Session、调度 Runner
+    → Task 调用 Agent 执行推理与环境交互
+    → Gateway 记录采样轨迹，Task 返回评分
+    → Framework 关联轨迹与评分，交回 verl 训练
+```
+
+这里下发的是任务样本与执行配置，不是梯度或优化器状态。Task 负责一次任务的执行与验证；Framework 则负责批量任务的分发、并发限制、会话失败隔离和结果回收。异步训练还需要让 rollout 和参数更新独立推进。
+
+**Gateway 解决“模型调用如何变成准确的训练轨迹”；Framework 解决“如何接收 verl 的任务样本、组织 Agent 执行，再把轨迹与评分交回训练系统”。**
+
+两层分开，是因为它们管理的状态不同：
+
+- Gateway 关注一次次模型请求，以及这些请求之间的上下文关系。
+- Framework 关注一个个任务执行，以及样本、会话、奖励和训练记录之间的关系。
 
 ### 如何串起调用链
 
 ```text
-verl / 推理入口
+verl 的 rollout 请求 / 独立推理入口
+    → 任务样本与执行配置
     → AgentFrameworkRolloutAdapter
     → AgentFrameworkWorker / GatewayAgentFramework
     → 创建 Gateway Session
     → Agent Runner（默认 run_task）
     → TaskConfigResolver → Task.run()
+    → agent.run() 执行推理与环境交互
     → 返回 TaskResult
     → finalize Session，获得 Trajectory
     → 轨迹选择与后处理、奖励衔接
@@ -280,7 +339,28 @@ Trajectory：token、mask、logprob、多模态数据
 
 最终奖励取决于配置：Framework 可使用 Runner 奖励，也可交给 verl Reward Loop Worker 处理。TransferQueue 解耦 rollout 与训练，Trainer 从队列读取完成记录，再进行优势估计、损失计算和参数更新。
 
-Runner 异常时，Framework 中止对应 Session；单个 Session 失败不会直接丢弃同一样本其他成功会话的结果。
+### 同一样本的多次执行与失败隔离
+
+以同一个 SWE-Bench 样本采样三次为例，每次执行使用独立的 Docker 沙箱和 Gateway Session。下图假设直接使用 Task 返回的二元测试奖励：
+
+```mermaid
+flowchart TD
+    P["同一个 SWE-Bench 样本"] --> F["Framework：安排三次执行"]
+    F --> A["执行 A<br/>Docker A + Session A"]
+    F --> B["执行 B<br/>Docker B + Session B"]
+    F --> C["执行 C<br/>Docker C + Session C"]
+    A --> AR["测试通过<br/>TaskResult.reward = 1"]
+    B --> BR["正常结束，测试未通过<br/>TaskResult.reward = 0"]
+    C --> CR["Runner 抛出异常<br/>中止 Session"]
+    AR --> M["Framework 关联评分与轨迹"]
+    BR --> M
+    M --> Q["TransferQueue"]
+    Q --> T["verl 训练"]
+```
+
+执行 A 和 B 都正常返回任务结果：A 的修复通过测试，B 的修复未通过测试。**任务失败仍然可以产生有效训练数据**，因此 B 的零奖励轨迹也可以交给训练侧。
+
+执行 C 属于运行异常，Framework 中止对应 Session，不能简单将它等同于一次零奖励的正常执行。单个 Session 失败不会直接丢弃同一样本其他正常会话的结果；图中 A、B 的结果仍可进入后续训练流程。
 
 ## Router 与运行观测
 
