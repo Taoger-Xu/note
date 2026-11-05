@@ -191,6 +191,91 @@ ReAct 的两条调用路径是：
 
 Sandbox 提供 `exec()`、`read_file()`、`write_file()` 等接口。Docker 提供本地容器隔离，Modal、veFaaS、E2B 等提供远程环境；`local` 直接执行宿主机命令，不提供隔离。
 
+### 白盒扩展：为不同任务接入不同模态
+
+白盒框架允许用户直接组合 Task、Agent、Tools 和 Sandbox，定制模型如何观察环境、调用工具并接收反馈。统一的是组件之间的职责与接口；不同任务仍需要自己的观察表示、动作实现和评分逻辑。
+
+#### 通用结构：Task 组织执行，Agent 实现求解
+
+用户先在 `TaskConfig` 中选择 Agent、Sandbox 和任务参数，并提供对应的样本数据。Task 负责组织执行和评分；Agent 负责模型交互与求解策略；Tools 按需操作沙箱或宿主侧状态。
+
+```mermaid
+flowchart TD
+    Config["TaskConfig<br/>样本、Agent、Sandbox、任务参数"] --> Task["Task<br/>组织一次任务执行"]
+
+    Task --> Agent["Agent<br/>求解策略与交互循环"]
+    Task --> Sandbox["Sandbox<br/>执行环境与生命周期"]
+    Task --> Eval["任务评分器<br/>验证结果"]
+
+    Agent --> Tools["Tools / Toolbox<br/>可选的动作接口"]
+    Tools --> Sandbox
+    Tools --> State["宿主侧状态<br/>例如内存中的图片"]
+
+    Agent --> Result["AgentResult<br/>回答、执行状态、对话"]
+    Result --> Eval
+    Sandbox -->|"文件与执行结果"| Eval
+
+    Eval --> TaskResult["TaskResult<br/>reward、accuracy、finished、extra_info"]
+```
+
+这里的样本与配置表示任务输入的整体组合，不要求所有数据都直接存入同一个配置对象。评分器也可以是 Task 内部的方法，不一定是独立组件。**工具不必全部经过 Sandbox**：图像裁剪等操作可以处理宿主内存中的状态，代码执行则通常需要沙箱环境。
+
+#### 图像任务：DeepEyes 的裁剪与放大循环
+
+以 DeepEyes 图像问答为例，多模态接入需要将图像观察纳入模型上下文，并让工具产生新的视觉观察。下面展示其任务组织方式：
+
+```mermaid
+flowchart TD
+    Task["DeepEyesTask"] --> Agent["DeepEyesAgent"]
+    Task --> Sandbox["Sandbox<br/>生命周期接口"]
+    Agent --> Image["读取原图<br/>宿主侧图像对象"]
+    Image --> Tool["ImageZoomInTool"]
+    Agent --> Box["Toolbox"]
+    Box --> Tool
+
+    Agent --> Model["视觉模型"]
+    Model -->|"请求裁剪放大"| Box
+    Tool --> Crop["局部图像"]
+    Crop --> Context["追加多模态消息"]
+    Context --> Model
+
+    Model --> Answer["最终答案"]
+    Answer --> Judge["DeepEyes 评分器"]
+    Task -->|"问题、参考答案、评分配置"| Judge
+    Judge --> Result["TaskResult"]
+```
+
+Agent 将原图与问题提供给视觉模型。模型需要观察细节时，Toolbox 分发裁剪放大请求，`ImageZoomInTool` 生成局部图像，再作为多模态消息加入上下文。模型可以据此继续调用工具或给出最终答案，Task 再按参考答案与评分配置组织验证。
+
+这个例子中，图像工具处理宿主侧图像对象；Sandbox 的生命周期接口与实际承载图像处理的位置可以分开。图中的模型调用与评分结果回传为简化表示，实际仍由 Agent 和 Task 组织。
+
+#### 代码任务：SWE-Bench 的文件与进程交互
+
+代码修复面对的观察与动作不同：Agent 需要读取文件、修改代码、执行命令，环境状态主要由 Sandbox 中的仓库和进程承载。
+
+```mermaid
+flowchart TD
+    Task["SWEBenchTask"] --> Env["Sandbox<br/>Docker / 远程后端"]
+    Env --> Repo["/testbed<br/>代码、依赖、测试、进程"]
+
+    Task --> Agent["ReActAgent"]
+    Agent --> Box["Toolbox"]
+    Box --> Shell["ShellTool<br/>运行命令"]
+    Box --> Editor["EditFileTool<br/>查看与修改文件"]
+    Box --> Submit["SubmitTool<br/>结束求解"]
+
+    Shell --> Env
+    Editor --> Env
+
+    Task --> Reward["compute_reward"]
+    Reward -->|"执行评估测试"| Env
+    Reward --> Score["resolved → reward"]
+```
+
+图中的 Shell、Editor 和 Submit 表示工具职责，具体类名与注册名称由实现决定。Agent 求解结束后，Task 在同一个任务环境中运行评估测试，将 `resolved` 等验证结果转换为任务奖励。
+
+对比两个任务，接入新模态需要明确三件事：**Agent 如何构造模型输入，工具如何产生下一步观察，Task 如何判断结果是否正确。** 框架复用任务组织、工具接口和环境管理；模型服务还需要支持相应模态，Gateway 的编码与轨迹路径也需要与之兼容。完成这些接入后，再由 Framework 将任务执行与 verl 的 rollout 请求连接起来。
+
 ### 如何通过配置组合组件
 
 ```yaml
