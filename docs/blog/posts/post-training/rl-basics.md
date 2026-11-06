@@ -56,4 +56,7 @@ tags:
 
 ## 参考资料
 
+- [David Silver：UCL Course on Reinforcement Learning](https://davidstarsilver.wordpress.com/teaching/)
+- [动手学强化学习](https://hrl.boyuai.com/)
+
 <!-- 本文配图放在 assets/rl-basics/ 下，用相对路径引用。 -->
