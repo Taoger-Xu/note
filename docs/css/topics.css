@@ -38,3 +38,22 @@
 .md-typeset .topic-back { display: inline-block; margin-top: 12px; font-size: 12px; color: var(--home-muted); }
 #site-map { scroll-margin-top: 110px; }
 @media (max-width: 760px) { .topic-archive { grid-template-columns: 1fr; } .topic-map-scroll { padding: 4px; } }
+.rl-roadmap-figure { overflow-x: auto; margin: 1.5em auto; max-width: 720px; }
+.md-typeset .rl-roadmap-figure figcaption { max-width: none; font-size: .75rem; font-style: normal; color: var(--md-default-fg-color--light); }
+.rl-roadmap { display: block; width: 100%; min-width: 560px; height: auto; color: var(--md-default-fg-color); --rl-value: #2f6fd6; --rl-policy: #c06a00; }
+[data-md-color-scheme="slate"] .rl-roadmap { --rl-value: #8bb4fa; --rl-policy: #e8b05d; }
+.rl-band { fill: currentColor; fill-opacity: .035; }
+.rl-lane-label { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+.rl-lane-label.rl-value { fill: var(--rl-value); }
+.rl-lane-label.rl-policy { fill: var(--rl-policy); }
+.rl-deep { fill: none; stroke: currentColor; stroke-opacity: .35; stroke-dasharray: 5 5; }
+.rl-deep-label { fill: currentColor; fill-opacity: .6; font-size: 13px; }
+.rl-edge { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.4; }
+.rl-borrow { stroke-dasharray: 5 4; }
+.rl-arrowhead { fill: currentColor; fill-opacity: .7; }
+.rl-edge-label { fill: currentColor; fill-opacity: .72; font-size: 13px; }
+.rl-node rect { fill: var(--md-default-bg-color); stroke: var(--rl-accent); stroke-width: 1.6; }
+.rl-node.rl-value { --rl-accent: var(--rl-value); }
+.rl-node.rl-policy { --rl-accent: var(--rl-policy); }
+.rl-title { fill: currentColor; font-size: 16px; font-weight: 700; }
+.rl-sub { fill: currentColor; fill-opacity: .68; font-size: 13px; }

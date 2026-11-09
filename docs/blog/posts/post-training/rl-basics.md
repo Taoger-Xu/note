@@ -26,6 +26,13 @@ tags:
 
 <!-- more -->
 
+## 路线图
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/rl-roadmap.svg"
+<figcaption>两条主线：基于价值的方法逐步去掉对模型的依赖，最后用神经网络近似 Q；基于策略的方法直接优化策略，并借用 TD 学到的价值函数作为 Critic。</figcaption>
+</figure>
+
 ## 基本概念：智能体、环境与 MDP
 
 <!-- 状态、动作、奖励、策略、轨迹、回报与折扣因子。 -->
