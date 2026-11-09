@@ -5,7 +5,7 @@ date: 2026-11-06
 authors:
   - taoger
 slug: rl-basics
-draft: true
+draft: false
 categories:
   - 后训练
   - 强化学习

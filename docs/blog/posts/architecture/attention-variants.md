@@ -5,7 +5,7 @@ date: 2026-11-03
 authors:
   - taoger
 slug: attention-variants
-draft: true
+draft: false
 categories:
   - 模型架构
   - 高效注意力

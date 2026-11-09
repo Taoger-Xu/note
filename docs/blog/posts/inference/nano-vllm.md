@@ -5,7 +5,7 @@ date: 2026-11-08
 authors:
   - taoger
 slug: nano-vllm
-draft: true
+draft: false
 categories:
   - 推理系统
 topics:
