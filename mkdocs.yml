@@ -165,7 +165,10 @@ nav:
       - course/index.md
       - CS336:
           - course/cs336/index.md
-          - Parallelism: course/cs336/parallelism.md
+          - Lecture:
+              - Parallelism: course/cs336/lecture/parallelism.md
+          - Lab:
+              - Parallelism: course/cs336/lab/parallelism.md
       - CMU Agent: course/cmu-agent/index.md
       - CS329Z:
           - course/cs329z/index.md
