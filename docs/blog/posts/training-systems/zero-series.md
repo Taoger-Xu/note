@@ -26,62 +26,49 @@ tags:
 
 # 大模型并行训练技术之ZERO系列
 
-用 Adam + 混合精度训练一个参数量为 $\Psi$ 的模型，光是“模型状态”就要占 $16\Psi$ 字节显存；而在普通数据并行（DP）里，每张卡都完整地存一份。ZeRO（Zero Redundancy Optimizer）的思路是：既然所有卡存的都是同一份东西，那就把它切开，每张卡只保管自己负责的那一片。按切分对象的不同，分为 ZeRO-1（优化器状态）、ZeRO-2（+ 梯度）、ZeRO-3（+ 参数）三个阶段。
+Adam + 混合精度下，$\Psi$ 个参数的模型状态占 $16\Psi$ 字节，DP 中每张卡各存一份。ZeRO 把这些状态切成 $N$ 片，每张卡只存自己那一片：ZeRO-1 切优化器状态，ZeRO-2 再切梯度，ZeRO-3 再切参数。
+
+![ZeRO 三个阶段的显存对比](assets/zero-series/zero-overview.png)
 
 <!-- more -->
 
-## 背景与动机
+| 方法 | 切分对象 | 单卡显存 | $\Psi=7.5\text{B}, N=64$ | 单卡通信量 |
+| --- | --- | --- | --- | --- |
+| DP | — | $16\Psi$ | 120 GB | $2\Psi$ |
+| ZeRO-1（$P_{os}$） | 优化器状态 | $4\Psi + \frac{12\Psi}{N}$ | 31.4 GB | $2\Psi$ |
+| ZeRO-2（$P_{os+g}$） | + 梯度 | $2\Psi + \frac{14\Psi}{N}$ | 16.6 GB | $2\Psi$ |
+| ZeRO-3（$P_{os+g+p}$） | + 参数 | $\frac{16\Psi}{N}$ | 1.9 GB | $3\Psi$ |
 
-### 每个参数的 4 种状态
+## 背景
+
+### Adam 的 4 种状态
 
 ![Adam 中每个参数对应的四种状态](assets/zero-series/adam-states.png)
 
-最朴素的梯度下降只需要参数 $W$ 和梯度 $\nabla W$：
-
-$$
-W \leftarrow W - \alpha \nabla W
-$$
-
-而大模型训练普遍使用 Adam，它为每个参数额外维护两个状态：
+Adam 除了参数 $W$ 和梯度 $\nabla W$，还为每个参数维护一阶矩 $m$ 和二阶矩 $v$：
 
 $$
 \begin{aligned}
-m &\leftarrow \beta_1 m + (1-\beta_1)\nabla W && \text{（一阶矩 / Momentum）}\\
-v &\leftarrow \beta_2 v + (1-\beta_2)(\nabla W)^2 && \text{（二阶矩 / Variance）}\\
+m &\leftarrow \beta_1 m + (1-\beta_1)\nabla W \\
+v &\leftarrow \beta_2 v + (1-\beta_2)(\nabla W)^2 \\
 W &\leftarrow W - \alpha \frac{m}{\sqrt{v}+\epsilon}
 \end{aligned}
 $$
 
-所以每个参数在训练时对应 **4 种状态**：
-
-| 状态 | 作用 |
-| --- | --- |
-| Parameters $W$ | 前向 / 反向计算用的权重 |
-| Gradients $\nabla W$ | 反向传播得到的梯度 |
-| Momentum $m$ | 梯度的指数滑动平均 |
-| Variance $v$ | 梯度平方的指数滑动平均 |
-
-其中 $m$、$v$ 只在优化器 step 时用到，统称**优化器状态（optimizer states）**。
+$m$、$v$ 只在 optimizer step 时使用，称为**优化器状态**。
 
 ### 混合精度训练
 
 ![混合精度训练流程](assets/zero-series/mixed-precision.png)
 
-如果 4 种状态都用 FP32，每个参数要 $4\times 4 = 16$ 字节。混合精度训练把计算密集的部分换成 16 位，但为了数值稳定，保留一份 FP32 的副本：
+前向和反向用 FP16 的 $W$ 与 $\nabla W$；优化器在 FP32 下更新一份 **Master Weights**，再 cast 回 FP16。保留 FP32 是为了解决两个精度问题：
 
-- **FP16 区域**（前向 + 反向）：参数 $W$ 和梯度 $\nabla W$ 都是 FP16，矩阵乘法可以跑在 Tensor Core 上，速度快、显存省。
-- **FP32 区域**（优化器更新）：梯度转成 FP32 后，与 FP32 的 $m$、$v$ 一起更新一份 **FP32 Master Weights**，更新完再 cast 回 FP16 供下一轮前向使用。
+1. **梯度下溢**：FP16 最小正数约 $6\times10^{-8}$，更小的梯度变成 0。用 **Loss Scaling** 先放大 loss（如 $\times 1024$），更新前再除回。
+2. **更新被吞掉**：FP16 在 1 附近的间隔约 $10^{-3}$，$1 + 0.0001 = 1$。在 FP32 上累积更新才不会丢失。
 
-为什么必须保留 FP32？有两个精度问题：
+### DP 的显存开销
 
-1. **梯度下溢**：FP16（1 位符号 / 5 位指数 / 10 位尾数）能表示的最小正数约为 $6\times10^{-8}$，像 $10^{-8}$ 这样的小梯度会直接变成 0。解决办法是 **Loss Scaling**：先把 loss 乘上一个系数（如 $\times 1024$），由链式法则所有梯度也被放大，$10^{-8}\to 1.024\times10^{-5}$，落回 FP16 的可表示范围；更新前再除回去。
-2. **更新被吞掉**：FP16 在 1 附近的间隔约为 $10^{-3}$，所以 $1 + 0.0001$ 在 FP16 下仍等于 $1$，微小的更新量直接丢失。在 FP32 的 Master Weights 上做更新，$1+0.0001=1.0001$ 才能被正确累积。
-
-### 数据并行下的显存开销
-
-![数据并行下每张卡都保存完整的模型状态](assets/zero-series/dp-memory.png)
-
-把混合精度下每个参数的显存开销加起来（$\Psi$ 为参数量）：
+![DP 下每张卡都保存完整的模型状态](assets/zero-series/dp-memory.png)
 
 | 状态 | 精度 | 字节 / 参数 |
 | --- | --- | --- |
@@ -92,131 +79,116 @@ $$
 | Variance | FP32 | 4 |
 | **合计** | | **16** |
 
-$$
-2\Psi + 2\Psi + 12\Psi = 16\Psi
-$$
+其中 FP32 的 $12\Psi$（即图中的 $K\Psi$，$K=12$）是优化器状态。7.5B 模型需要 120GB，DP 中每张卡都存一份。这里只讨论模型状态，不含激活值等 residual states。
 
-其中 $12\Psi$ 的 FP32 部分（Master + $m$ + $v$）统称优化器状态，占了大头。以 7.5B 模型为例，模型状态需要 $16\times7.5\text{B}=120\text{GB}$，远超一张 32GB 的 V100。
-
-普通数据并行中，每张 GPU 拿不同的数据，但**都完整保存这 120GB**：4 张卡就有 4 份一模一样的优化器状态、梯度和参数，这就是 ZeRO 要消除的冗余。（这里只讨论模型状态，不含激活值、临时缓冲等 residual states。）
-
-## ZeRO 系列概览
-
-### 从 All-reduce 到 Reduce-scatter + All-gather
+## 核心思路：All-reduce = Reduce-scatter + All-gather
 
 ![All-reduce 拆分为 Reduce-scatter 和 All-gather](assets/zero-series/allreduce-rs-ag.png)
 
-数据并行每一步要做梯度同步：目标是让每张 GPU 都拿到**相同的平均梯度**，用的通信原语是 All-reduce。在 NCCL 的 Ring 实现中，All-reduce 本身就是两步：
+DP 用 All-reduce 同步梯度，Ring All-reduce 本身由两步组成：
 
-1. **Reduce-scatter**：把梯度切成 $N$ 片，第 $i$ 张卡负责第 $i$ 片，把 $N$ 份副本加起来再除以 $N$。结束后**每张卡只有自己那一片是有效的平均梯度**，其余 $N-1$ 片已经“发出去了，不会再用”（图中的死鱼 🐟）。
-2. **All-gather**：每张卡把自己那片有效结果广播给其他卡，最终人人都有完整的平均梯度。
+1. **Reduce-scatter（RS）**：梯度切成 $N$ 片，第 $i$ 张卡得到第 $i$ 片的平均梯度，其余 $N-1$ 片不再有用。
+2. **All-gather（AG）**：各卡广播自己那片，拼回完整梯度。
 
-设参数量为 $\Psi$、卡数为 $N$，每张卡在每一步的发送量为：
+每一步中，每张卡都要发出 $N-1$ 片、每片 $\Psi/N$。图中 $N=4$，RS 和 AG 的单卡通信量各为 $\frac{3}{4}\Psi$：
 
-| 原语 | 单卡通信量 |
-| --- | --- |
-| Reduce-scatter | $\frac{N-1}{N}\Psi \approx \Psi$（图中 $3\times \Psi/4$） |
-| All-gather | $\frac{N-1}{N}\Psi \approx \Psi$ |
-| All-reduce = RS + AG | $2\frac{N-1}{N}\Psi \approx 2\Psi$ |
-
-注意：把 All-reduce 拆成 RS + AG **本身并不会减少通信量**，仍然是 $2\Psi$。真正的关键观察是 **Reduce-scatter 之后**：
-
-> 每张卡只持有 $1/N$ 的有效平均梯度。如果第 $i$ 张卡只负责更新第 $i$ 片参数，那它根本不需要完整的梯度，也不需要完整的优化器状态。
-
-于是 ZeRO 把 All-gather 从“收集梯度”挪到了“收集更新后的参数”：
-
-$$
-\underbrace{\text{RS(梯度)} + \text{AG(梯度)}}_{\text{DP: } 2\Psi} \quad\Longrightarrow\quad \underbrace{\text{RS(梯度)} \to \text{本地更新 } 1/N \to \text{AG(参数)}}_{\text{ZeRO-1/2: } 2\Psi}
-$$
-
-通信量不变，但每张卡上的状态可以只存 $1/N$。根据切分的对象不同，就得到了 ZeRO 的三个阶段：
-
-| 阶段 | 切分对象 | 符号 |
+| 原语 | 单卡通信量 | 图中（$N=4$） |
 | --- | --- | --- |
-| ZeRO-1 | 优化器状态 | $P_{os}$ |
-| ZeRO-2 | 优化器状态 + 梯度 | $P_{os+g}$ |
-| ZeRO-3 | 优化器状态 + 梯度 + 参数 | $P_{os+g+p}$ |
+| Reduce-scatter | $\frac{N-1}{N}\Psi$ | $\frac{3}{4}\Psi$ |
+| All-gather | $\frac{N-1}{N}\Psi$ | $\frac{3}{4}\Psi$ |
+| All-reduce = RS + AG | $\frac{2(N-1)}{N}\Psi$ | $\frac{3}{2}\Psi$ |
 
-## ZeRO-1
+$N$ 较大时 $\frac{N-1}{N}\to 1$，所以 DP 每张 GPU 每个 step 的通信量约为 $2\Psi$。
 
-![ZeRO stage 1：切分优化器状态](assets/zero-series/zero-stage1.png)
-
-**核心问题：哪张 GPU 更新哪部分权重？**
-
-ZeRO-1 把占大头的 $12\Psi$ 优化器状态（FP32 Master、$m$、$v$）切成 $N$ 片，第 $i$ 张卡只保存第 $i$ 片（Shard $i$），也只负责更新这一片对应的权重。FP16 的参数和梯度仍然每卡一份完整的。
-
-一个训练 step 的流程：
-
-1. **前向 + 反向**：每张卡用自己的数据和完整的 FP16 参数算出完整的 FP16 梯度。
-2. **Reduce-scatter 梯度**：第 $i$ 张卡得到第 $i$ 片的平均梯度（通信 $\Psi$）。
-3. **本地更新**：用这片梯度和本地的 $m_i, v_i$ 更新 FP32 Master Weights 的第 $i$ 片，再转成 FP16。
-4. **All-gather 参数**：各卡交换自己更新好的 FP16 参数片，拼回完整参数，供下一步前向使用（通信 $\Psi$）。
-
-显存开销：
+关键在 RS 之后：第 $i$ 张卡只有第 $i$ 片有效梯度。如果它只负责更新第 $i$ 片参数，就既不需要完整梯度，也不需要完整的优化器状态。于是 ZeRO 把 AG 从梯度挪到了更新后的参数上：
 
 $$
-2\Psi + 2\Psi + \frac{12\Psi}{N}
+\underbrace{\text{RS(梯度)} + \text{AG(梯度)}}_{\text{DP: } 2\Psi} \quad\Longrightarrow\quad \underbrace{\text{RS(梯度)} \to \text{更新本卡 } 1/N \to \text{AG(参数)}}_{\text{ZeRO-1/2: } 2\Psi}
 $$
 
-7.5B 模型、4 张卡：$15 + 15 + 90/4 = 52.5\text{GB}$，相比 DP 的 120GB 降了一半多；当 $N$ 很大时趋近 $4\Psi$，即约 **4 倍**的显存节省。通信量仍为 $2\Psi$，与 DP 相同。
+通信量不变，每张卡的状态只需存 $1/N$。
 
-## ZeRO-2
+## ZeRO-1：切分优化器状态
 
-ZeRO-1 中还有一处明显的浪费：Reduce-scatter 之后，每张卡上 $N-1$ 片梯度已经是“死鱼”——发出去以后不再参与任何计算，却还占着显存。
+![ZeRO-1：切分优化器状态](assets/zero-series/zero-stage1.png)
 
-ZeRO-2 在 ZeRO-1 基础上**把梯度也切分**：第 $i$ 张卡只保留第 $i$ 片的平均梯度，其余梯度在 Reduce-scatter 后立即释放。实际实现中，反向传播是逐层进行的，DeepSpeed 会把梯度分桶（bucket），某个桶的梯度一算完就做 Reduce-scatter 并释放非本卡负责的部分，所以峰值显存里不会出现完整的梯度。
+$12\Psi$ 的优化器状态切成 $N$ 片，第 $i$ 张卡只存、只更新第 $i$ 片；FP16 参数和梯度仍是完整的。一个 step：
 
-显存开销：
+1. 前向 + 反向，得到完整的 FP16 梯度。
+2. RS 梯度，拿到第 $i$ 片平均梯度（$\Psi$）。
+3. 用本地 $m_i, v_i$ 更新第 $i$ 片 Master Weights，cast 为 FP16。
+4. AG 参数，拼回完整 FP16 参数（$\Psi$）。
 
-$$
-2\Psi + \frac{(2+12)\Psi}{N}
-$$
+显存 $4\Psi + \frac{12\Psi}{N}$，$N$ 大时趋近 $4\Psi$，约 **4 倍**节省；通信 $2\Psi$，与 DP 相同。
 
-7.5B、4 张卡：$15 + 105/4 = 41.25\text{GB}$；$N$ 很大时趋近 $2\Psi$，约 **8 倍**节省。通信流程与 ZeRO-1 一样（RS 梯度 + AG 参数），仍为 $2\Psi$。
+## ZeRO-2：再切分梯度
 
-## ZeRO-3
+![ZeRO-2：参数完整，梯度和优化器状态切分](assets/zero-series/zero-stage2.png)
 
-到了 ZeRO-2，每张卡上剩下的冗余只有完整的 FP16 参数 $2\Psi$。ZeRO-3 把**参数也切分**，每张卡只常驻 $1/N$ 的参数。
+ZeRO-2 不改变通信，只省显存，利用的是**反向传播逐层计算**这一点。
 
-代价是计算时需要“临时借”参数：
+反向从最后一层往前算，第 $l$ 层的梯度一旦算出，本 step 内就不会再变。所以不必等整个反向结束再统一做 RS：
 
-1. **前向**：计算到某一层前，All-gather 这一层的完整参数，算完立即丢弃非本卡的部分（通信 $\Psi$）。
-2. **反向**：再次逐层 All-gather 参数用于计算梯度，用完即丢（通信 $\Psi$）。
-3. **梯度同步**：对梯度做 Reduce-scatter，每张卡拿到自己那片（通信 $\Psi$）。
-4. **本地更新**：直接更新本卡那片参数，不再需要最后的 All-gather。
+1. 第 $l$ 层（实际按 bucket 分组）的梯度算完，立即做 RS。
+2. 只保留本卡负责的那 $1/N$，其余立即释放。
+3. 同时继续算第 $l-1$ 层，RS 通信与反向计算重叠。
 
-显存开销：
+ZeRO-1 要等反向结束才 RS，显存中会有完整的 $2\Psi$ 梯度；ZeRO-2 中任意时刻只有本卡的 $\frac{2\Psi}{N}$ 加一个正在通信的 bucket。
 
-$$
-\frac{(2+2+12)\Psi}{N} = \frac{16\Psi}{N}
-$$
+显存 $2\Psi + \frac{14\Psi}{N}$：7.5B、4 卡为 41.3GB，仍放不进 32GB；$N$ 大时约 **8 倍**节省。RS 只是提前到反向中进行，通信仍为 $2\Psi$（RS 梯度 + AG 参数）。
 
-7.5B、4 张卡：$120/4 = 30\text{GB}$，终于塞进了 32GB 的卡；显存节省与卡数 $N$ 成**线性**关系。通信量变为 $3\Psi$，是 DP 的 1.5 倍。实践中通过预取（prefetch）下一层参数，让 All-gather 和计算重叠来掩盖这部分开销。
+## ZeRO-3：再切分参数
 
-## 显存与通信开销对比
+ZeRO-2 之后，每张卡上剩下的冗余只有完整的 FP16 参数 $2\Psi$。ZeRO-3 的出发点是：**前向和反向都是逐层计算的，任意时刻只需要当前这一层的完整参数**。所以参数也可以切成 $1/N$ 常驻，算到哪一层再临时收集哪一层。
 
-以 $\Psi=7.5\text{B}$ 为例（$N=64$ 为 ZeRO 论文中的设置）：
+### 前向：用到哪层，收集哪层
 
-| 方法 | 单卡显存公式 | $N=4$ | $N=64$ | 单卡通信量 |
-| --- | --- | --- | --- | --- |
-| DP | $16\Psi$ | 120 GB | 120 GB | $2\Psi$ |
-| ZeRO-1 | $4\Psi + \frac{12\Psi}{N}$ | 52.5 GB | 31.4 GB | $2\Psi$ |
-| ZeRO-2 | $2\Psi + \frac{14\Psi}{N}$ | 41.25 GB | 16.6 GB | $2\Psi$ |
-| ZeRO-3 | $\frac{16\Psi}{N}$ | 30 GB | 1.9 GB | $3\Psi$ |
+![ZeRO-3 前向：5 种状态全部切分，逐层收集参数](assets/zero-series/zero-stage3-forward.png)
 
-一句话总结三个阶段的演进：
+对每一层 $l$：
 
-- **ZeRO-1**：Reduce-scatter 后每张卡只需更新 $1/N$ 的权重 → 只存 $1/N$ 的优化器状态。
-- **ZeRO-2**：Reduce-scatter 后其余梯度不再使用 → 只存 $1/N$ 的梯度。
-- **ZeRO-3**：参数只在计算时才需要完整 → 只存 $1/N$ 的参数，用时 All-gather。
+1. AG 收集第 $l$ 层的完整参数。
+2. 计算第 $l$ 层的前向。
+3. 丢弃非本卡的参数片，只留自己的 $1/N$。
 
-## 实践记录
+所有层走完，累计 AG 了一份完整参数，即图中的 “Forward gathers P”（$\Psi$）。
 
-<!-- 记录实验环境、配置、结果与遇到的问题。 -->
+### 反向：再收集一次参数，梯度边算边 RS
+
+![ZeRO-3 反向：再次收集参数，梯度做 Reduce-scatter](assets/zero-series/zero-stage3-backward.png)
+
+前向结束后参数已经丢掉，反向计算梯度时还要用，只能再收集一次。从最后一层往前，对每一层 $l$：
+
+1. AG 收集第 $l$ 层的完整参数（“Backward gathers P”，累计 $\Psi$）。
+2. 计算第 $l$ 层的梯度，然后丢弃非本卡的参数片。
+3. 与 ZeRO-2 相同，梯度算完立即 RS，只留本卡的 $1/N$（“Reduce-scatter P”，累计 $\Psi$）。
+
+### 更新
+
+每张卡用本卡的梯度片和优化器状态，直接更新本卡的参数片。参数本来就是切分存储的，**不需要 ZeRO-1/2 最后那次 AG**，下一个 step 前向时再按需收集。
+
+### 开销
+
+- **显存**：$\frac{16\Psi}{N}$，加上同一时刻正在使用的一两层完整参数。7.5B、4 卡为 30GB，终于放进 32GB；显存随 $N$ **线性**下降。
+- **通信**：前向 AG $\Psi$ + 反向 AG $\Psi$ + 梯度 RS $\Psi$ = $3\Psi$，是 DP 的 1.5 倍。多出来的 $\Psi$ 来自反向又收集了一遍参数。
+- **掩盖通信**：计算第 $l$ 层时预取第 $l+1$ 层（反向时是 $l-1$ 层）的参数，让 AG 与计算重叠。
 
 ## 总结
 
-ZeRO 没有改变数据并行“每张卡处理不同数据”的本质，而是观察到 DP 中模型状态的冗余，并利用 All-reduce = Reduce-scatter + All-gather 这一结构，让每张卡只保管、只更新自己那 $1/N$ 的状态。ZeRO-1/2 在通信量不变的前提下分别带来约 4 倍和 8 倍的显存节省；ZeRO-3 以 1.5 倍通信为代价，让显存随卡数线性下降。
+- **ZeRO-1**：RS 后每张卡只更新 $1/N$ 权重 → 只存 $1/N$ 优化器状态。
+- **ZeRO-2**：RS 后其余梯度不再使用 → 只存 $1/N$ 梯度。
+- **ZeRO-3**：参数只在计算时需要完整 → 只存 $1/N$ 参数，用时 AG。
+
+ZeRO-1/2 不增加通信，分别省约 4 倍和 8 倍显存；ZeRO-3 多 50% 通信，换来随卡数线性下降的显存。
+
+表面上看，FSDP（即 ZeRO-3）在计算时确实会把完整参数加载到 GPU 中，那它为什么能节省显存呢？关键在于**时间差**和**计算粒度**：
+
+- **时间差（即用即弃）**：在计算某层时，确实会通过 AllGather 操作重建完整参数，但计算完成后立即释放这些临时聚合的参数。DP 中完整参数从头到尾常驻，ZeRO-3 中每层的完整参数只是短暂出现。
+- **计算粒度**：收集的单位是一层（FSDP 中是一个 FSDP unit），不是整个模型。同一时刻显存中只有当前层（加上预取的下一层）的完整参数。
+
+所以 ZeRO-3 的显存峰值是 $\frac{16\Psi}{N}$ 加上一两层的完整参数，而不是 $16\Psi$。模型层数越多，单层占比越小，这部分额外开销就越可以忽略。
+
+在分布式训练中，为了解决单卡显存不足和计算效率的问题，有两条主要的技术路线：一条是以 FSDP 为代表，通过切分模型的状态来解决内存问题；另一条则是以 Megatron-LM 为代表，通过切分模型的计算来解决内存问题。
 
 ## 参考资料
 
