@@ -1,0 +1,2917 @@
+<!DOCTYPE html><html lang="zh" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从任务执行、轨迹采集和训练衔接理解 Uni-Agent 的架构、组件边界与核心调用链。">
+      
+      
+        <meta name="author" content="Jintao Xu">
+      
+      
+        <link rel="canonical" href="https://taoger-xu.github.io/note/blog/uni-agent/">
+      
+      
+        <link rel="prev" href="../attention-variants/">
+      
+      
+        <link rel="next" href="../rl-interview-qa/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/avatar.jpg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Uni-Agent: Train Long-Horizon Agents at Scale - Jintaoxu's Note</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M8.17%202.76A10.1%2010.1%200%200%201%2012%202c1.31%200%202.61.26%203.83.76%201.21.5%202.31%201.24%203.24%202.17s1.67%202.03%202.17%203.24c.5%201.22.76%202.52.76%203.83%200%202.65-1.05%205.2-2.93%207.07A9.97%209.97%200%200%201%2012%2022a10.1%2010.1%200%200%201-3.83-.76%2010%2010%200%200%201-3.24-2.17A9.97%209.97%200%200%201%202%2012c0-2.65%201.05-5.2%202.93-7.07.93-.93%202.03-1.67%203.24-2.17M12%2017l1.56-3.42L17%2012l-3.44-1.56L12%207l-1.57%203.44L7%2012l3.43%201.58z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=LXGW+WenKai+Screen:300,300i,400,400i,700,700i%7CMonaspace+Krypton:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"LXGW WenKai Screen";--md-code-font:"Monaspace Krypton"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+      <link rel="stylesheet" href="../../css/theme.css">
+    
+      <link rel="stylesheet" href="../../css/home.css">
+    
+      <link rel="stylesheet" href="../../css/topics.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+SC:300,300i,400,400i,700,700i&amp;display=fallback">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","UA-XXXXXXXX-X"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","UA-XXXXXXXX-X",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXX-X",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#uni-agent-train-long-horizon-agents-at-scale" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="Jintaoxu's Note" class="md-header__button md-logo" aria-label="Jintaoxu's Note" data-md-component="logo">
+      
+  <img src="../../assets/avatar.jpg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Jintaoxu's Note
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Uni-Agent: Train Long-Horizon Agents at Scale
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard="" data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Taoger-Xu/note" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    note
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../course/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Course
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden="">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Jintaoxu's Note" class="md-nav__button md-logo" aria-label="Jintaoxu's Note" data-md-component="logo">
+      
+  <img src="../../assets/avatar.jpg" alt="logo">
+
+    </a>
+    Jintaoxu's Note
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Taoger-Xu/note" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    note
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked="">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Blog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    归档
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    归档
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../archive/2026/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分类
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    分类
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分布式训练
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%90%8E%E8%AE%AD%E7%BB%83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    后训练
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    多模态
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    强化学习
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E6%8E%A8%E7%90%86%E7%B3%BB%E7%BB%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    推理系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E6%A8%A1%E5%9E%8B%E6%9E%B6%E6%9E%84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型架构
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E8%AE%AD%E7%BB%83%E7%B3%BB%E7%BB%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    训练系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E9%AB%98%E6%95%88%E6%B3%A8%E6%84%8F%E5%8A%9B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    高效注意力
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Course
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Course
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/cs336/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CS336
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CS336
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs336/lecture/parallelism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_3" id="__nav_3_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lab
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lab
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs336/lab/parallelism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cmu-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CMU Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/cs329z/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CS329Z
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CS329Z
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs329z/lecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#uni-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么需要 Uni-Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何组织整体架构
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="如何组织整体架构">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        组件与目录
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#taskagenttool-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        任务执行：Task、Agent、Tool 与 Sandbox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="任务执行：Task、Agent、Tool 与 Sandbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么要拆分这些职责
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何执行一次任务
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 如何调用不同 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        白盒与黑盒 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        白盒扩展：为不同任务接入不同模态
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="白盒扩展：为不同任务接入不同模态">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-agent_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        通用结构：Task 组织执行，Agent 实现求解
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepeyes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        图像任务：DeepEyes 的裁剪与放大循环
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swe-bench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        代码任务：SWE-Bench 的文件与进程交互
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何通过配置组合组件
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gateway-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gateway：从 Messages 到训练轨迹
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gateway：从 Messages 到训练轨迹">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么需要 Gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何处理模型请求
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何表示训练轨迹
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#framework-verl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework：对接 verl 的任务分发与结果回收
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Framework：对接 verl 的任务分发与结果回收">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么需要独立编排层
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何串起调用链
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        同一样本的多次执行与失败隔离
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#router" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Router 与运行观测
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Router 与运行观测">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么需要
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何实现
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何接入 verl
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="如何接入 verl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentloopmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么通过 AgentLoopManager 接入
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        配置与初始化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        样本提交与训练数据交付
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verlfully-async-partial-rollout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        如何利用 verl：Fully Async 与 Partial Rollout 缓解长尾
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="如何利用 verl：Fully Async 与 Partial Rollout 缓解长尾">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        为什么需要
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colocate-async" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Colocate Async 如何切换
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partial-rollout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial Rollout 如何续生成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#separate-async" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Separate Async 如何持续重叠
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        长尾仍受组与策略滞后约束
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        源码阅读顺序
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资料
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+  <div class="md-content md-content--post" data-md-component="content">
+    <div class="md-sidebar md-sidebar--post" data-md-component="sidebar" data-md-type="navigation">
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner md-post">
+          <nav class="md-nav md-nav--primary">
+            <div class="md-post__back">
+              <div class="md-nav__title md-nav__container">
+                <a href="../" class="md-nav__link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+                  <span class="md-ellipsis">
+                    回到主页
+                  </span>
+                </a>
+              </div>
+            </div>
+            
+              <div class="md-post__authors md-typeset">
+                
+                  <div class="md-profile md-post__profile">
+                    <span class="md-author md-author--long">
+                      <img src="https://avatars.githubusercontent.com/Taoger-Xu" alt="JintaoXu">
+                    </span>
+                    <span class="md-profile__description">
+                      <strong>
+                        
+                          JintaoXu
+                        
+                      </strong>
+                      <br>
+                      Creator
+                    </span>
+                  </div>
+                
+              </div>
+            
+            <ul class="md-post__meta md-nav__list">
+              <li class="md-nav__item md-nav__item--section">
+                <div class="md-post__title">
+                  <span class="md-ellipsis">
+                    元数据
+                  </span>
+                </div>
+                <nav class="md-nav">
+                  <ul class="md-nav__list">
+                    <li class="md-nav__item">
+                      <div class="md-nav__link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 19H5V8h14m-3-7v2H8V1H6v2H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1V1m-1 11h-5v5h5z"></path></svg>
+                        <time datetime="2026-11-04 00:00:00+00:00" class="md-ellipsis">2026年11月4日</time>
+                      </div>
+                    </li>
+                    
+                    
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3v15h3V3zm3 2 4 13 3-1-4-13zM5 5v13h3V5zM3 19v2h18v-2z"></path></svg>
+                          <span class="md-ellipsis">
+                            分类于
+                            
+                              <a href="../category/agent/">Agent</a>, 
+                              <a href="../category/%E8%AE%AD%E7%BB%83%E7%B3%BB%E7%BB%9F/">训练系统</a></span>
+                        </div>
+                      </li>
+                    
+                    
+                      
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 20a8 8 0 0 0 8-8 8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10 10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67-.75 1.23L11 13V7z"></path></svg>
+                          <span class="md-ellipsis">
+                            
+                              需要 17 分钟阅读时间
+                            
+                          </span>
+                        </div>
+                      </li>
+                    
+                  </ul>
+                </nav>
+              </li>
+            </ul>
+            
+          </nav>
+          
+        </div>
+      </div>
+    </div>
+    <article class="md-content__inner md-typeset">
+      
+        
+  
+
+
+
+  
+    <a href="https://github.com/Taoger-Xu/note/edit/master/docs/blog/posts/agents/uni-agent.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/Taoger-Xu/note/raw/master/docs/blog/posts/agents/uni-agent.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+    </a>
+  
+
+
+<h1 id="uni-agent-train-long-horizon-agents-at-scale">Uni-Agent: Train Long-Horizon Agents at Scale<a class="headerlink" href="#uni-agent-train-long-horizon-agents-at-scale" title="Anchor link to this section for reference">¶</a></h1>
+<p><a href="https://github.com/verl-project/uni-agent">Uni-Agent</a> 围绕三个方向构建：</p>
+<ol>
+<li><strong>白盒框架。</strong> 提供可修改、可扩展的框架，让用户自由构建和定制 Agent，并在黑盒 Harness 尚未覆盖的方向扩展，例如 Desktop、GUI、Audio 等多模态交互，以及 Multi-Agent 系统编排。</li>
+<li><strong>Agent Gateway。</strong> 接入 Claude Code、Codex 等黑盒 Harness，复用训练与部署时的交互栈，减少“训练 Harness ≠ 推理 Harness”带来的性能损失。</li>
+<li><strong>Agentic RL 优化。</strong> 面向 128K 上下文、数百轮交互和高频工具调用，优化训练效率、资源使用、奖励与稳定性，并在 SWE-Bench Verified 上取得性能提升。</li>
+</ol>
+<p>各组件分工如下：</p>
+<ul>
+<li><strong>Task</strong>：定义任务、管理生命周期并计算评分。</li>
+<li><strong>Agent</strong>：执行求解策略，与环境交互。</li>
+<li><strong>Gateway</strong>：适配模型协议，捕获 token 级采样轨迹。</li>
+<li><strong>Framework</strong>：编排执行，关联轨迹与任务结果，交给 verl 训练。</li>
+<li><strong>verl</strong>：执行优势估计、损失计算与模型参数更新。</li>
+</ul>
+<!-- more -->
+
+<h2 id="uni-agent">为什么需要 Uni-Agent<a class="headerlink" href="#uni-agent" title="Anchor link to this section for reference">¶</a></h2>
+<p>代码修复任务的一次 rollout 可能持续数百轮：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1">1</a></span>
+<span class="normal"><a href="#__codelineno-0-2">2</a></span>
+<span class="normal"><a href="#__codelineno-0-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a>阅读 issue → 搜索代码 → 修改文件 → 运行测试 → 根据报错继续修改
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2"></a>                                          ↓
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a>                                验证结果 → 奖励 → 参数更新
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>它需要持续存在的文件系统、工具进程和多轮上下文。规模化训练还要处理环境回收、推理缓存、长尾任务、执行失败，以及采样记录的准确性。</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../agents/assets/uni-agent/challenges.svg" data-desc-position="bottom"><img alt="大规模 Agentic RL 的挑战及应对方向" src="../agents/assets/uni-agent/challenges.svg"></a></p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>为什么需要处理</th>
+<th>实现方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>大规模环境</td>
+<td>每个任务都有独立的文件、依赖和进程</td>
+<td>沙箱启动、隔离、超时与回收</td>
+</tr>
+<tr>
+<td>长上下文推理</td>
+<td>工具等待期间，下一轮仍可能复用历史上下文</td>
+<td>请求调度、KV cache 复用与卸载</td>
+</tr>
+<tr>
+<td>长上下文训练</td>
+<td>长轨迹增加激活与反向传播开销</td>
+<td>并行、重计算与卸载</td>
+</tr>
+<tr>
+<td>Harness 接入</td>
+<td>历史压缩、重试和分支会改变上下文</td>
+<td>在模型调用边界采集真实 token 轨迹</td>
+</tr>
+<tr>
+<td>有效学习</td>
+<td>奖励稀疏、轨迹长、策略版本变化</td>
+<td>奖励设计、信用分配与训练优化</td>
+</tr>
+</tbody>
+</table>
+<p>图中方向不等于当前版本已全部实现。Uni-Agent 与 verl 的分工是：<strong>Uni-Agent 组织实际任务的交互并交付训练数据；verl 负责优势估计、策略损失和分布式参数更新。</strong></p>
+<p>verl 本身已有多轮 Agent Loop 接口；Uni-Agent 进一步抽出任务、工具、环境和 harness 接入的公共工程，使评测与训练可以复用同一套交互栈。</p>
+<h2 id="_1">如何组织整体架构<a class="headerlink" href="#_1" title="Anchor link to this section for reference">¶</a></h2>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../agents/assets/uni-agent/goals.svg" data-desc-position="bottom"><img alt="统一任务与统一 Gateway 的目标" src="../agents/assets/uni-agent/goals.svg"></a></p>
+<p>项目将任务执行与模型调用拆开：环境操作经过 Sandbox，模型请求经过 Gateway。Framework 在任务结束后关联评分与轨迹。</p>
+<pre class="mermaid"><code>flowchart TD
+    Entry["推理入口 / verl 训练入口"] --&gt; Framework["Framework&lt;br/&gt;并发调度、失败隔离、结果交付"]
+    Framework --&gt; Runner["Task Runner&lt;br/&gt;解析配置、注入模型端点"]
+    Runner --&gt; Task["Task&lt;br/&gt;管理一次任务的完整生命周期"]
+    Task --&gt; Agent["Agent&lt;br/&gt;解决问题"]
+    Task --&gt; Sandbox["Sandbox&lt;br/&gt;执行环境与文件系统"]
+    Task --&gt; Reward["Reward / Verification&lt;br/&gt;检查结果并评分"]
+    Agent --&gt; Tools["Toolbox / Tools&lt;br/&gt;白盒 Agent 的动作"]
+    Tools --&gt; Sandbox
+    Agent --&gt;|黑盒 harness 执行| Sandbox
+    Agent --&gt;|模型请求，黑盒由其进程发起| Gateway["Gateway&lt;br/&gt;协议适配、Session、轨迹捕获"]
+    Gateway --&gt; Backend["模型推理后端"]
+    Gateway --&gt; Trajectory["Token 级 Trajectory"]
+    Trajectory --&gt; Framework
+    Task --&gt;|TaskResult| Framework
+    Framework --&gt; TQ["TransferQueue"]
+    TQ --&gt; Trainer["verl Trainer&lt;br/&gt;优势估计、损失计算、参数更新"]</code></pre>
+<p>上图展示 Gateway 管理的执行路径。普通 API 推理可直接运行 Task，让 Agent 请求外部模型服务，不必经过 Gateway 和 TransferQueue。外部 API 可用于评测；参数训练需要可更新权重的模型后端。</p>
+<h3 id="_2">组件与目录<a class="headerlink" href="#_2" title="Anchor link to this section for reference">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>组件 / 目录</th>
+<th>为什么需要</th>
+<th>如何实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tasks/</code></td>
+<td>不同任务有不同环境与成功标准</td>
+<td>Task 组合 Sandbox、Agent 和验证逻辑，返回 <code>TaskResult</code></td>
+</tr>
+<tr>
+<td><code>agents/</code></td>
+<td>求解策略与任务评分需要独立变化</td>
+<td>自己实现交互循环，或启动外部 harness</td>
+</tr>
+<tr>
+<td><code>tools/</code></td>
+<td>模型需要结构化的动作接口</td>
+<td>Tool 定义动作；Toolbox 绑定环境、提供 schema 并分发调用</td>
+</tr>
+<tr>
+<td><code>sandbox/</code></td>
+<td>环境部署方式不应绑定 Agent</td>
+<td>统一命令执行、文件操作和生命周期接口</td>
+</tr>
+<tr>
+<td><code>gateway/</code></td>
+<td>兼容已有模型 API，并准确采集训练轨迹</td>
+<td>协议适配、Session 管理、消息编解码和 token 缓冲</td>
+</tr>
+<tr>
+<td><code>framework/</code></td>
+<td>并发执行和训练数据交付需要统一组织</td>
+<td>调度 Runner、隔离失败、关联奖励、写入 TransferQueue</td>
+</tr>
+<tr>
+<td><code>agent_aware_router/</code></td>
+<td>多推理副本的负载和缓存状态不同</td>
+<td>采集状态，由路由策略选择副本</td>
+</tr>
+<tr>
+<td><code>logging/</code>、<code>rl_insight/</code></td>
+<td>长任务和分布式执行难以定位问题</td>
+<td>日志上下文、运行产物、观测信号与追踪</td>
+</tr>
+<tr>
+<td><code>examples/</code>、<code>tests/</code>、<code>docs/</code></td>
+<td>配置与行为需要可复现、可验证</td>
+<td>运行配方、回归测试和使用说明</td>
+</tr>
+</tbody>
+</table>
+<h2 id="taskagenttool-sandbox">任务执行：Task、Agent、Tool 与 Sandbox<a class="headerlink" href="#taskagenttool-sandbox" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="_3">为什么要拆分这些职责<a class="headerlink" href="#_3" title="Anchor link to this section for reference">¶</a></h3>
+<p>同一个代码修复任务可以使用 ReAct 或 Claude Code，也可以运行在 Docker 或远程沙箱。任务评分、求解策略和基础设施各自变化，因此分别由 Task、Agent 和 Sandbox 管理。</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../agents/assets/uni-agent/architecture.svg" data-desc-position="bottom"><img alt="Framework、Task Runner、Gateway 与工具执行架构" src="../agents/assets/uni-agent/architecture.svg"></a></p>
+<h3 id="_4">如何执行一次任务<a class="headerlink" href="#_4" title="Anchor link to this section for reference">¶</a></h3>
+<p>内置 SWE-Bench Task 的主流程如下：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-1-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-1-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-1-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-1-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-1-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-1-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-1-10">10</a></span>
+<span class="normal"><a href="#__codelineno-1-11">11</a></span>
+<span class="normal"><a href="#__codelineno-1-12">12</a></span>
+<span class="normal"><a href="#__codelineno-1-13">13</a></span>
+<span class="normal"><a href="#__codelineno-1-14">14</a></span>
+<span class="normal"><a href="#__codelineno-1-15">15</a></span>
+<span class="normal"><a href="#__codelineno-1-16">16</a></span>
+<span class="normal"><a href="#__codelineno-1-17">17</a></span>
+<span class="normal"><a href="#__codelineno-1-18">18</a></span>
+<span class="normal"><a href="#__codelineno-1-19">19</a></span>
+<span class="normal"><a href="#__codelineno-1-20">20</a></span>
+<span class="normal"><a href="#__codelineno-1-21">21</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1"></a>SWEBenchTask.run()
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2"></a>│
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3"></a>├── build_sandbox()
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4"></a>│   └── 根据 provider 创建 Sandbox
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5"></a>│
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6"></a>├── Sandbox.__aenter__()
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7"></a>│   └── 启动环境
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8"></a>│
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9"></a>├── build_agent()
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10"></a>│   └── 根据 agent.name 创建 Agent
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11"></a>│
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12"></a>├── agent.run(sandbox, messages, workdir)
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13"></a>│   └── 在 /testbed 中修复代码
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14"></a>│
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15"></a>├── compute_reward(sample, sandbox)
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16"></a>│   └── 运行测试并解析 resolved
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17"></a>│
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18"></a>├── 构造 TaskResult
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19"></a>│
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20"></a>└── Sandbox.__aexit__()
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21"></a>    └── 停止环境，然后返回结果
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>Task 管理 Sandbox 生命周期；Agent 和评分器使用同一个已启动的环境。上述调用树展示默认的 Agent 求解路径；Oracle 模式会跳过 Agent，直接应用标准补丁后评分。</p>
+<p><code>TaskResult</code> 的字段各有用途：</p>
+<ul>
+<li><code>reward</code>：任务结果奖励。</li>
+<li><code>accuracy</code>：评估准确率。</li>
+<li><code>finished</code>：是否正常完成，允许 <code>True</code>、<code>False</code> 或未报告的 <code>None</code>。</li>
+<li><code>extra_info</code>：评估报告、错误等结构化上下文，不直接作为聚合指标。</li>
+</ul>
+<h3 id="task-agent">Task 如何调用不同 Agent<a class="headerlink" href="#task-agent" title="Anchor link to this section for reference">¶</a></h3>
+<p><code>Task.run()</code> 组织任务环境、Agent 执行和结果验证，再通过统一的 <code>agent.run(sandbox, messages, workdir)</code> 接口调用不同 Agent。具体的推理与工具交互过程由各 Agent 实现。</p>
+<p>以白盒 ReAct Agent 为例，<code>agent.run()</code> 内部的流程是：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1"></a>Task 调用 agent.run()
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2"></a>    → 创建 Toolbox 和模型客户端
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3"></a>    → 初始化 transcript（交互历史）
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4"></a>    → 循环调用 step()
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5"></a>        ├── 将 transcript 发给模型
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6"></a>        ├── 将模型回复加入 transcript
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7"></a>        ├── 执行工具调用
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8"></a>        └── 将工具结果加入 transcript
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9"></a>    → 满足停止条件
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10"></a>    → 清理工具与模型客户端
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11"></a>    → 返回 AgentResult
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>Task 获得 <code>AgentResult</code> 后继续验证任务并返回 <code>TaskResult</code>。替换 Agent 时，Task 可以复用相同的任务环境和评分逻辑；ReAct 在框架内执行上述循环，黑盒 Agent 则可以启动外部 harness，由它管理内部交互。</p>
+<p>接入 RL 时，Gateway 捕获模型调用对应的 token 轨迹，Framework 组织任务执行并关联轨迹与评分，再将训练记录交给 verl。因此，同一套任务与 Agent 执行逻辑可以用于推理评测和 RL rollout。</p>
+<h3 id="agent">白盒与黑盒 Agent<a class="headerlink" href="#agent" title="Anchor link to this section for reference">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>如何运行</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>白盒</td>
+<td>Uni-Agent 控制模型请求、工具调用、上下文和停止条件</td>
+<td>ReAct、MemAgent</td>
+</tr>
+<tr>
+<td>黑盒</td>
+<td>通过 Sandbox 启动外部进程，由 harness 控制内部循环</td>
+<td>Claude Code、Codex、OpenClaw</td>
+</tr>
+</tbody>
+</table>
+<p>ReAct 的两条调用路径是：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span>
+<span class="normal"><a href="#__codelineno-3-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1"></a>模型决策：Agent → Gateway → 模型后端
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2"></a>环境执行：Agent → Toolbox → Tool → Sandbox
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>工具结果加入消息后，Agent 再次请求模型。Toolbox 负责参数校验、动作分发和工具生命周期。黑盒 harness 通常使用自己的工具系统，不必经过 Uni-Agent 的 Toolbox。</p>
+<p>Sandbox 提供 <code>exec()</code>、<code>read_file()</code>、<code>write_file()</code> 等接口。Docker 提供本地容器隔离，Modal、veFaaS、E2B 等提供远程环境；<code>local</code> 直接执行宿主机命令，不提供隔离。</p>
+<h3 id="_5">白盒扩展：为不同任务接入不同模态<a class="headerlink" href="#_5" title="Anchor link to this section for reference">¶</a></h3>
+<p>白盒框架允许用户直接组合 Task、Agent、Tools 和 Sandbox，定制模型如何观察环境、调用工具并接收反馈。统一的是组件之间的职责与接口；不同任务仍需要自己的观察表示、动作实现和评分逻辑。</p>
+<h4 id="task-agent_1">通用结构：Task 组织执行，Agent 实现求解<a class="headerlink" href="#task-agent_1" title="Anchor link to this section for reference">¶</a></h4>
+<p>用户先在 <code>TaskConfig</code> 中选择 Agent、Sandbox 和任务参数，并提供对应的样本数据。Task 负责组织执行和评分；Agent 负责模型交互与求解策略；Tools 按需操作沙箱或宿主侧状态。</p>
+<pre class="mermaid"><code>flowchart TD
+    Config["TaskConfig&lt;br/&gt;样本、Agent、Sandbox、任务参数"] --&gt; Task["Task&lt;br/&gt;组织一次任务执行"]
+
+    Task --&gt; Agent["Agent&lt;br/&gt;求解策略与交互循环"]
+    Task --&gt; Sandbox["Sandbox&lt;br/&gt;执行环境与生命周期"]
+    Task --&gt; Eval["任务评分器&lt;br/&gt;验证结果"]
+
+    Agent --&gt; Tools["Tools / Toolbox&lt;br/&gt;可选的动作接口"]
+    Tools --&gt; Sandbox
+    Tools --&gt; State["宿主侧状态&lt;br/&gt;例如内存中的图片"]
+
+    Agent --&gt; Result["AgentResult&lt;br/&gt;回答、执行状态、对话"]
+    Result --&gt; Eval
+    Sandbox --&gt;|"文件与执行结果"| Eval
+
+    Eval --&gt; TaskResult["TaskResult&lt;br/&gt;reward、accuracy、finished、extra_info"]</code></pre>
+<p>这里的样本与配置表示任务输入的整体组合，不要求所有数据都直接存入同一个配置对象。评分器也可以是 Task 内部的方法，不一定是独立组件。<strong>工具不必全部经过 Sandbox</strong>：图像裁剪等操作可以处理宿主内存中的状态，代码执行则通常需要沙箱环境。</p>
+<h4 id="deepeyes">图像任务：DeepEyes 的裁剪与放大循环<a class="headerlink" href="#deepeyes" title="Anchor link to this section for reference">¶</a></h4>
+<p>以 DeepEyes 图像问答为例，多模态接入需要将图像观察纳入模型上下文，并让工具产生新的视觉观察。下面展示其任务组织方式：</p>
+<pre class="mermaid"><code>flowchart TD
+    Task["DeepEyesTask"] --&gt; Agent["DeepEyesAgent"]
+    Task --&gt; Sandbox["Sandbox&lt;br/&gt;生命周期接口"]
+    Agent --&gt; Image["读取原图&lt;br/&gt;宿主侧图像对象"]
+    Image --&gt; Tool["ImageZoomInTool"]
+    Agent --&gt; Box["Toolbox"]
+    Box --&gt; Tool
+
+    Agent --&gt; Model["视觉模型"]
+    Model --&gt;|"请求裁剪放大"| Box
+    Tool --&gt; Crop["局部图像"]
+    Crop --&gt; Context["追加多模态消息"]
+    Context --&gt; Model
+
+    Model --&gt; Answer["最终答案"]
+    Answer --&gt; Judge["DeepEyes 评分器"]
+    Task --&gt;|"问题、参考答案、评分配置"| Judge
+    Judge --&gt; Result["TaskResult"]</code></pre>
+<p>Agent 将原图与问题提供给视觉模型。模型需要观察细节时，Toolbox 分发裁剪放大请求，<code>ImageZoomInTool</code> 生成局部图像，再作为多模态消息加入上下文。模型可以据此继续调用工具或给出最终答案，Task 再按参考答案与评分配置组织验证。</p>
+<p>这个例子中，图像工具处理宿主侧图像对象；Sandbox 的生命周期接口与实际承载图像处理的位置可以分开。图中的模型调用与评分结果回传为简化表示，实际仍由 Agent 和 Task 组织。</p>
+<h4 id="swe-bench">代码任务：SWE-Bench 的文件与进程交互<a class="headerlink" href="#swe-bench" title="Anchor link to this section for reference">¶</a></h4>
+<p>代码修复面对的观察与动作不同：Agent 需要读取文件、修改代码、执行命令，环境状态主要由 Sandbox 中的仓库和进程承载。</p>
+<pre class="mermaid"><code>flowchart TD
+    Task["SWEBenchTask"] --&gt; Env["Sandbox&lt;br/&gt;Docker / 远程后端"]
+    Env --&gt; Repo["/testbed&lt;br/&gt;代码、依赖、测试、进程"]
+
+    Task --&gt; Agent["ReActAgent"]
+    Agent --&gt; Box["Toolbox"]
+    Box --&gt; Shell["ShellTool&lt;br/&gt;运行命令"]
+    Box --&gt; Editor["EditFileTool&lt;br/&gt;查看与修改文件"]
+    Box --&gt; Submit["SubmitTool&lt;br/&gt;结束求解"]
+
+    Shell --&gt; Env
+    Editor --&gt; Env
+
+    Task --&gt; Reward["compute_reward"]
+    Reward --&gt;|"执行评估测试"| Env
+    Reward --&gt; Score["resolved → reward"]</code></pre>
+<p>图中的 Shell、Editor 和 Submit 表示工具职责，具体类名与注册名称由实现决定。Agent 求解结束后，Task 在同一个任务环境中运行评估测试，将 <code>resolved</code> 等验证结果转换为任务奖励。</p>
+<p>对比两个任务，接入新模态需要明确三件事：<strong>Agent 如何构造模型输入，工具如何产生下一步观察，Task 如何判断结果是否正确。</strong> 框架复用任务组织、工具接口和环境管理；模型服务还需要支持相应模态，Gateway 的编码与轨迹路径也需要与之兼容。完成这些接入后，再由 Framework 将任务执行与 verl 的 rollout 请求连接起来。</p>
+<h3 id="_6">如何通过配置组合组件<a class="headerlink" href="#_6" title="Anchor link to this section for reference">¶</a></h3>
+<div class="language-yaml highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1">1</a></span>
+<span class="normal"><a href="#__codelineno-4-2">2</a></span>
+<span class="normal"><a href="#__codelineno-4-3">3</a></span>
+<span class="normal"><a href="#__codelineno-4-4">4</a></span>
+<span class="normal"><a href="#__codelineno-4-5">5</a></span>
+<span class="normal"><a href="#__codelineno-4-6">6</a></span>
+<span class="normal"><a href="#__codelineno-4-7">7</a></span>
+<span class="normal"><a href="#__codelineno-4-8">8</a></span>
+<span class="normal"><a href="#__codelineno-4-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swe_bench</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="w">  </span><span class="nt">sandbox</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="w">  </span><span class="nt">agent</span><span class="p">:</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">react</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stateful_shell</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">str_replace_editor</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">submit</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>从 <a href="https://github.com/verl-project/uni-agent/blob/main/uni_agent/tasks/swe_bench/task.py"><code>SWEBenchTask</code></a> 开始读，重点理解一句话：</p>
+<p><strong>它将“一个代码修复样本、一个执行环境、一个 Agent 和一个测试评分器”组装成一次完整任务。</strong></p>
+<p>当前阅读版本的整个文件只有 74 行，主流程是：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1">1</a></span>
+<span class="normal"><a href="#__codelineno-5-2">2</a></span>
+<span class="normal"><a href="#__codelineno-5-3">3</a></span>
+<span class="normal"><a href="#__codelineno-5-4">4</a></span>
+<span class="normal"><a href="#__codelineno-5-5">5</a></span>
+<span class="normal"><a href="#__codelineno-5-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1"></a>读取任务配置
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2"></a>    → 启动 Sandbox
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3"></a>    → Agent 修改代码，或直接应用标准补丁
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4"></a>    → 在同一 Sandbox 中运行评估
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5"></a>    → 生成 TaskResult
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6"></a>    → 清理 Sandbox 后返回
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>具体看 <code>run()</code>：从 <code>cfg.metadata</code> 取出样本，用 <code>async with self.build_sandbox()</code> 管理环境；通常调用 <code>agent.run(..., workdir="/testbed")</code> 修复代码，Oracle 模式则直接应用样本中的标准补丁。随后调用 <code>compute_reward()</code> 运行评估，将 <code>resolved</code> 转成 <code>reward</code> 和 <code>accuracy</code>，并返回 <code>TaskResult</code>。退出 <code>async with</code> 时先清理环境，再把结果交给调用方。</p>
+<h2 id="gateway-messages">Gateway：从 Messages 到训练轨迹<a class="headerlink" href="#gateway-messages" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="gateway">为什么需要 Gateway<a class="headerlink" href="#gateway" title="Anchor link to this section for reference">¶</a></h3>
+<p>已有 harness 包含自己的提示词、工具、记忆和重试逻辑。通过兼容的模型 API 接入，可以保留这些行为，并在模型调用边界记录训练数据。</p>
+<p>最终对话文本不足以还原真实采样：重新 tokenize 可能改变 token 序列，历史压缩、分支和工具上下文也不能直接拼接。Gateway 因此保存实际生成的 token、mask 和 log probability。</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../agents/assets/uni-agent/gateway-design.svg" data-desc-position="bottom"><img alt="Gateway 在消息接口与 token 接口之间组织训练轨迹" src="../agents/assets/uni-agent/gateway-design.svg"></a></p>
+<h3 id="_7">如何处理模型请求<a class="headerlink" href="#_7" title="Anchor link to this section for reference">¶</a></h3>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-6-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-6-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-6-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-6-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-6-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-6-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-6-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-6-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-6-10">10</a></span>
+<span class="normal"><a href="#__codelineno-6-11">11</a></span>
+<span class="normal"><a href="#__codelineno-6-12">12</a></span>
+<span class="normal"><a href="#__codelineno-6-13">13</a></span>
+<span class="normal"><a href="#__codelineno-6-14">14</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1"></a>GatewayManager
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2"></a>    管理 Gateway actor 池，定位 Session 所属 actor
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3"></a>        ↓
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4"></a>GatewayActor（gateway.py）
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5"></a>    接收 HTTP 请求，管理 Session 与 policy 绑定
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6"></a>        ↓
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7"></a>Adapters
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8"></a>    将 OpenAI / Anthropic 请求转换为内部格式
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9"></a>        ↓
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10"></a>GatewaySession + MessageCodec
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11"></a>    管理多轮上下文、编码模型输入、记录采样 token
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12"></a>        ↓
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13"></a>模型后端
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14"></a>    生成结果返回 Session，再由 Adapter 包装成 JSON / SSE
+</span></code></pre></div></td></tr></tbody></table></div>
+<p><code>gateway.py</code> 是服务入口，主要路由包括：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-1">1</a></span>
+<span class="normal"><a href="#__codelineno-7-2">2</a></span>
+<span class="normal"><a href="#__codelineno-7-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1"></a>/sessions/{session_id}/v1/chat/completions
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2"></a>/sessions/{session_id}/v1/responses
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3"></a>/sessions/{session_id}/v1/messages
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>以 <code>_handle_openai_chat_completions()</code> 为例：</p>
+<ol>
+<li>根据 <code>session_id</code> 找到 Session 和绑定的 policy。</li>
+<li>Adapter 转换请求，处理采样参数与覆盖权限。</li>
+<li><code>session.run_generation()</code> 调用对应后端并记录轨迹。</li>
+<li>Adapter 将结果包装为普通响应或流式响应。</li>
+</ol>
+<p>多轮状态主要位于 <code>session/session.py</code>，消息编解码位于 <code>session/codec.py</code>。Gateway 本身不执行工具；token 的实际生成由模型后端完成。</p>
+<h3 id="_8">如何表示训练轨迹<a class="headerlink" href="#_8" title="Anchor link to this section for reference">¶</a></h3>
+<p><code>SessionHandle</code> 向 Runner 提供 <code>session_id</code> 和会话专属 <code>base_url</code>。任务结束后，<code>finalize_session()</code> 返回一条或多条 <code>Trajectory</code>；异常时调用 <code>abort_session()</code>。</p>
+<table>
+<thead>
+<tr>
+<th><code>Trajectory</code> 字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prompt_ids</code></td>
+<td>轨迹初始输入 token</td>
+</tr>
+<tr>
+<td><code>response_ids</code></td>
+<td>模型输出与后续插入的上下文 token</td>
+</tr>
+<tr>
+<td><code>response_mask</code></td>
+<td>区分模型输出与插入上下文</td>
+</tr>
+<tr>
+<td><code>response_logprobs</code></td>
+<td>与后续序列对齐的采样 log probability</td>
+</tr>
+<tr>
+<td><code>reward_score</code>、<code>reward_metrics</code></td>
+<td>Framework 或奖励 Worker 附加的评分信息</td>
+</tr>
+<tr>
+<td><code>finished</code></td>
+<td>Framework 附加的任务完成状态</td>
+</tr>
+<tr>
+<td><code>multi_modal_data</code></td>
+<td>多模态输入数据</td>
+</tr>
+</tbody>
+</table>
+<p>例如：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-1">1</a></span>
+<span class="normal"><a href="#__codelineno-8-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1"></a>后续序列：模型工具调用 → 工具返回结果 → 模型继续生成
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2"></a>mask：         1              0              1
+</span></code></pre></div></td></tr></tbody></table></div>
+<p><code>response_ids</code> 不全是需要计算策略损失的模型输出。工具结果属于后续上下文，通过 mask 区分。</p>
+<p>一个 Session 可以包含多条轨迹：上下文压缩、改写或分支可能使后续调用无法延续原来的 token 链。项目提供 Chain 与 Tree 两种轨迹组织方式，最终都输出统一的 <code>Trajectory</code>。</p>
+<h2 id="framework-verl">Framework：对接 verl 的任务分发与结果回收<a class="headerlink" href="#framework-verl" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="_9">为什么需要独立编排层<a class="headerlink" href="#_9" title="Anchor link to this section for reference">¶</a></h3>
+<p>Framework 对接 verl 的 rollout 请求，将任务样本分发给 Agent 执行推理和环境交互，再把执行产生的轨迹与评分组织成训练记录，交回 verl。它连接的是双向流程：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-1">1</a></span>
+<span class="normal"><a href="#__codelineno-9-2">2</a></span>
+<span class="normal"><a href="#__codelineno-9-3">3</a></span>
+<span class="normal"><a href="#__codelineno-9-4">4</a></span>
+<span class="normal"><a href="#__codelineno-9-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1"></a>verl 提供任务样本与 rollout 配置
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2"></a>    → Framework 创建 Session、调度 Runner
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3"></a>    → Task 调用 Agent 执行推理与环境交互
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4"></a>    → Gateway 记录采样轨迹，Task 返回评分
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5"></a>    → Framework 关联轨迹与评分，交回 verl 训练
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>这里下发的是任务样本与执行配置，不是梯度或优化器状态。Task 负责一次任务的执行与验证；Framework 则负责批量任务的分发、并发限制、会话失败隔离和结果回收。异步训练还需要让 rollout 和参数更新独立推进。</p>
+<p><strong>Gateway 解决“模型调用如何变成准确的训练轨迹”；Framework 解决“如何接收 verl 的任务样本、组织 Agent 执行，再把轨迹与评分交回训练系统”。</strong></p>
+<p>两层分开，是因为它们管理的状态不同：</p>
+<ul>
+<li>Gateway 关注一次次模型请求，以及这些请求之间的上下文关系。</li>
+<li>Framework 关注一个个任务执行，以及样本、会话、奖励和训练记录之间的关系。</li>
+</ul>
+<h3 id="_10">如何串起调用链<a class="headerlink" href="#_10" title="Anchor link to this section for reference">¶</a></h3>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-10-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-10-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-10-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-10-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-10-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-10-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-10-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-10-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-10-10">10</a></span>
+<span class="normal"><a href="#__codelineno-10-11">11</a></span>
+<span class="normal"><a href="#__codelineno-10-12">12</a></span>
+<span class="normal"><a href="#__codelineno-10-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1"></a>verl 的 rollout 请求 / 独立推理入口
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2"></a>    → 任务样本与执行配置
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3"></a>    → AgentFrameworkRolloutAdapter
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4"></a>    → AgentFrameworkWorker / GatewayAgentFramework
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5"></a>    → 创建 Gateway Session
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6"></a>    → Agent Runner（默认 run_task）
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7"></a>    → TaskConfigResolver → Task.run()
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8"></a>    → agent.run() 执行推理与环境交互
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9"></a>    → 返回 TaskResult
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10"></a>    → finalize Session，获得 Trajectory
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11"></a>    → 轨迹选择与后处理、奖励衔接
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12"></a>    → 写入 TransferQueue
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13"></a>    → verl 读取数据并训练
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>关键代码入口：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>framework/entry.py</code></td>
+<td>创建 Gateway Manager 和 Framework Worker，对接 verl rollout 接口</td>
+</tr>
+<tr>
+<td><code>framework/framework.py</code></td>
+<td>批量调度、并发限制、会话执行、轨迹处理与数据交付</td>
+</tr>
+<tr>
+<td><code>framework/task_runner.py</code></td>
+<td>解析样本配置，注入 Session 模型端点并运行 Task</td>
+</tr>
+<tr>
+<td><code>gateway/manager.py</code></td>
+<td>管理 Gateway actor 池和 Session 归属</td>
+</tr>
+</tbody>
+</table>
+<p>任务评分与采样数据来自两个入口：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-1">1</a></span>
+<span class="normal"><a href="#__codelineno-11-2">2</a></span>
+<span class="normal"><a href="#__codelineno-11-3">3</a></span>
+<span class="normal"><a href="#__codelineno-11-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1"></a>TaskResult：reward、accuracy、finished、评估详情
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2"></a>Trajectory：token、mask、logprob、多模态数据
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3"></a>                         ↓
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4"></a>                 Framework 关联两者
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>最终奖励取决于配置：Framework 可使用 Runner 奖励，也可交给 verl Reward Loop Worker 处理。TransferQueue 解耦 rollout 与训练，Trainer 从队列读取完成记录，再进行优势估计、损失计算和参数更新。</p>
+<h3 id="_11">同一样本的多次执行与失败隔离<a class="headerlink" href="#_11" title="Anchor link to this section for reference">¶</a></h3>
+<p>以同一个 SWE-Bench 样本采样三次为例，每次执行使用独立的 Docker 沙箱和 Gateway Session。下图假设直接使用 Task 返回的二元测试奖励：</p>
+<pre class="mermaid"><code>flowchart TD
+    P["同一个 SWE-Bench 样本"] --&gt; F["Framework：安排三次执行"]
+    F --&gt; A["执行 A&lt;br/&gt;Docker A + Session A"]
+    F --&gt; B["执行 B&lt;br/&gt;Docker B + Session B"]
+    F --&gt; C["执行 C&lt;br/&gt;Docker C + Session C"]
+    A --&gt; AR["测试通过&lt;br/&gt;TaskResult.reward = 1"]
+    B --&gt; BR["正常结束，测试未通过&lt;br/&gt;TaskResult.reward = 0"]
+    C --&gt; CR["Runner 抛出异常&lt;br/&gt;中止 Session"]
+    AR --&gt; M["Framework 关联评分与轨迹"]
+    BR --&gt; M
+    M --&gt; Q["TransferQueue"]
+    Q --&gt; T["verl 训练"]</code></pre>
+<p>执行 A 和 B 都正常返回任务结果：A 的修复通过测试，B 的修复未通过测试。<strong>任务失败仍然可以产生有效训练数据</strong>，因此 B 的零奖励轨迹也可以交给训练侧。</p>
+<p>执行 C 属于运行异常，Framework 中止对应 Session，不能简单将它等同于一次零奖励的正常执行。单个 Session 失败不会直接丢弃同一样本其他正常会话的结果；图中 A、B 的结果仍可进入后续训练流程。</p>
+<h2 id="router">Router 与运行观测<a class="headerlink" href="#router" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="_12">为什么需要<a class="headerlink" href="#_12" title="Anchor link to this section for reference">¶</a></h3>
+<p>多轮任务在工具执行期间暂停模型调用，再次请求时可能复用已有 KV cache。多副本环境还存在负载差异，单纯均分请求未必能获得最佳吞吐。</p>
+<h3 id="_13">如何实现<a class="headerlink" href="#_13" title="Anchor link to this section for reference">¶</a></h3>
+<p><code>agent_aware_router/</code> 通过 collectors 收集状态，由 store 保存，再由策略选择推理副本。它负责请求落到哪个副本；Gateway 负责请求属于哪个 Session，以及如何记录轨迹。</p>
+<p><code>logging/</code> 提供共享日志上下文与运行产物，<code>rl_insight/</code> 接入观测信号。它们帮助关联任务、会话和训练阶段，定位长尾与失败。</p>
+<h2 id="verl">如何接入 verl<a class="headerlink" href="#verl" title="Anchor link to this section for reference">¶</a></h2>
+<p>Uni-Agent 通过 verl 已有的 <code>agent_loop_manager_class</code> 扩展点接入，接管 Agent rollout 的执行与结果交付，继续复用 verl 的模型服务、ReplayBuffer、优势估计、参数更新和权重同步。</p>
+<p>以下调用链基于本项目锁定的 verl 子模块版本 <code>2bc6ac46043e31855cea194236ff7548c91817c8</code>。</p>
+<h3 id="agentloopmanager">为什么通过 AgentLoopManager 接入<a class="headerlink" href="#agentloopmanager" title="Anchor link to this section for reference">¶</a></h3>
+<p>Trainer 需要提交一批样本，并获得符合训练契约的数据，但不需要了解具体 Agent 如何调用工具、使用哪种沙箱。将执行入口与训练算法分开，可以在保留训练流程的同时替换任务与 harness。</p>
+<p>这一扩展点包含两部分契约：</p>
+<ul>
+<li><strong>控制接口</strong>：提供 <code>create(...)</code> 工厂入口和 <code>generate_sequences(batch)</code> 方法。</li>
+<li><strong>数据接口</strong>：将 rollout 结果按 verl 所需字段和状态写入 TransferQueue。</li>
+</ul>
+<p>Uni-Agent 的适配器不继承默认 <code>AgentLoopManagerTQ</code>，而是提供兼容的调用接口。训练数据通过队列交付，不通过 <code>generate_sequences()</code> 的返回值交付。</p>
+<h3 id="_14">配置与初始化<a class="headerlink" href="#_14" title="Anchor link to this section for reference">¶</a></h3>
+<p>训练脚本指定适配器的完整 Python 类路径：</p>
+<div class="language-bash highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-1">1</a></span>
+<span class="normal"><a href="#__codelineno-12-2">2</a></span>
+<span class="normal"><a href="#__codelineno-12-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1"></a>trainer.use_v1<span class="o">=</span>True<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2"></a>trainer.v1.trainer_mode<span class="o">=</span>colocate_async<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3"></a>++actor_rollout_ref.rollout.agent.agent_loop_manager_class<span class="o">=</span>uni_agent.framework.entry.AgentFrameworkRolloutAdapter
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>两个配置相互独立：<code>trainer_mode</code> 选择训练调度方式，<code>agent_loop_manager_class</code> 选择 rollout 执行入口。</p>
+<p>verl 的 <code>TaskRunnerV1.run()</code> 依次初始化 TransferQueue、Trainer 和 AgentLoopManager，再调用 <code>trainer.fit(manager)</code>。这里的 <code>TaskRunnerV1</code> 启动整个训练作业，与 Uni-Agent 执行单个样本的 <code>run_task()</code> 不同。</p>
+<p><code>init_agent_loop_manager()</code> 动态加载配置中的类；未配置时使用默认 <code>AgentLoopManagerTQ</code>。随后调用：</p>
+<div class="language-python highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-13-1">1</a></span>
+<span class="normal"><a href="#__codelineno-13-2">2</a></span>
+<span class="normal"><a href="#__codelineno-13-3">3</a></span>
+<span class="normal"><a href="#__codelineno-13-4">4</a></span>
+<span class="normal"><a href="#__codelineno-13-5">5</a></span>
+<span class="normal"><a href="#__codelineno-13-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1"></a><span class="n">manager</span> <span class="o">=</span> <span class="n">agent_loop_manager_cls</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2"></a>    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3"></a>    <span class="n">llm_client</span><span class="o">=</span><span class="n">trainer</span><span class="o">.</span><span class="n">get_llm_client</span><span class="p">(),</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4"></a>    <span class="n">teacher_client</span><span class="o">=</span><span class="n">trainer</span><span class="o">.</span><span class="n">get_teacher_client</span><span class="p">(),</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5"></a>    <span class="n">reward_loop_worker_handles</span><span class="o">=</span><span class="n">trainer</span><span class="o">.</span><span class="n">get_reward_handles</span><span class="p">(),</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6"></a><span class="p">)</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p><code>AgentFrameworkRolloutAdapter.create()</code> 创建两组组件：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-14-1">1</a></span>
+<span class="normal"><a href="#__codelineno-14-2">2</a></span>
+<span class="normal"><a href="#__codelineno-14-3">3</a></span>
+<span class="normal"><a href="#__codelineno-14-4">4</a></span>
+<span class="normal"><a href="#__codelineno-14-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1"></a>AgentFrameworkRolloutAdapter
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2"></a>├── GatewayManager
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3"></a>│   └── GatewayActor 池：使用 verl 注入的 llm_client
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4"></a>└── AgentFrameworkWorker（Ray actor）
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5"></a>    └── GatewayAgentFramework：调度 Runner、处理轨迹与奖励
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>Gateway 的模型后端直接使用 Trainer 提供的客户端，因此可以继承对应训练模式的生成行为。奖励 Worker 句柄也由 verl 注入；当前适配器不支持非空的 <code>teacher_client</code>。</p>
+<h3 id="_15">样本提交与训练数据交付<a class="headerlink" href="#_15" title="Anchor link to this section for reference">¶</a></h3>
+<p>Trainer 为样本分配 <code>uid</code>、注册 TransferQueue 的 <code>pending</code> 状态，然后调用：</p>
+<div class="language-python highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-15-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1"></a><span class="n">agent_loop_manager</span><span class="o">.</span><span class="n">generate_sequences</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>适配器将请求转发给 Framework Worker，立即返回 <code>None</code>：</p>
+<div class="language-python highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-16-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">framework_worker</span><span class="o">.</span><span class="n">generate_sequences</span><span class="o">.</span><span class="n">remote</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>Framework 创建 Session，调用配置中的 Runner。默认 <code>run_task()</code> 解析配置并运行 Task；Agent 的模型请求经过 Gateway，最终调用 verl 的 <code>llm_client.generate()</code>。</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant V as verl TaskRunnerV1
+    participant T as verl Trainer
+    participant A as Uni-Agent Adapter
+    participant F as Framework Worker
+    participant G as Gateway
+    participant R as Runner / Task / Agent
+    participant Q as TransferQueue
+
+    V-&gt;&gt;T: 初始化 Trainer
+    V-&gt;&gt;A: create(config, llm_client, reward_handles)
+    A-&gt;&gt;G: 创建 Gateway，注入 llm_client
+    A-&gt;&gt;F: 创建 Framework Worker
+    A--&gt;&gt;V: 返回 Adapter
+    V-&gt;&gt;T: fit(Adapter)
+
+    T-&gt;&gt;Q: 注册 pending 样本
+    T-&gt;&gt;A: generate_sequences(batch)
+    A-&gt;&gt;F: 远程提交执行
+    A--&gt;&gt;T: 返回 None
+
+    F-&gt;&gt;G: 创建 Session
+    F-&gt;&gt;R: 执行 Runner
+    R-&gt;&gt;G: Agent 模型请求
+    G-&gt;&gt;G: 调用 verl 客户端并记录 token
+    G--&gt;&gt;R: 模型响应
+    R--&gt;&gt;F: TaskResult
+    F-&gt;&gt;G: finalize Session
+    G--&gt;&gt;F: Trajectory
+    F-&gt;&gt;Q: 写入训练字段与状态
+    T-&gt;&gt;Q: ReplayBuffer.sample()
+    Q--&gt;&gt;T: 可训练数据
+    T-&gt;&gt;T: 优势估计与参数更新</code></pre>
+<p>图中模型请求可能重复多轮；ReplayBuffer 也可能提前开始等待数据，图示表达依赖关系，不表示异步执行的唯一时间顺序。</p>
+<p>Framework 将轨迹转换为 verl 的数据契约：</p>
+<table>
+<thead>
+<tr>
+<th>Uni-Agent 数据</th>
+<th>TransferQueue 字段</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prompt_ids</code>、<code>response_ids</code></td>
+<td><code>prompts</code>、<code>responses</code>，并构造 <code>input_ids</code> 等张量</td>
+</tr>
+<tr>
+<td><code>response_mask</code></td>
+<td><code>response_mask</code>、<code>loss_mask</code></td>
+</tr>
+<tr>
+<td><code>response_logprobs</code></td>
+<td><code>rollout_log_probs</code></td>
+</tr>
+<tr>
+<td>标量 <code>reward_score</code></td>
+<td><code>rm_scores</code>，放在最后一个 response 位置</td>
+</tr>
+<tr>
+<td>采样权重版本范围</td>
+<td><code>min_global_steps</code>、<code>max_global_steps</code> 标签</td>
+</tr>
+</tbody>
+</table>
+<p>Trainer 从 ReplayBuffer 获取可采样记录，再使用原有训练流程。最终奖励仍受奖励拓扑配置影响，例如后续 colocated reward pass 可能重新计算 <code>rm_scores</code>。</p>
+<p>源码入口：</p>
+<ul>
+<li><code>verl/verl/trainer/main_ppo.py</code>：动态加载并创建 rollout 管理器。</li>
+<li><code>uni_agent/framework/entry.py</code>：适配器、Gateway 与 Framework Worker 的组装。</li>
+<li><code>uni_agent/framework/framework.py</code>：执行任务并转换、写入训练记录。</li>
+<li><code>verl/verl/trainer/ppo/v1/trainer_base.py</code>：提交样本、从 ReplayBuffer 采样并训练。</li>
+</ul>
+<h3 id="verlfully-async-partial-rollout">如何利用 verl：Fully Async 与 Partial Rollout 缓解长尾<a class="headerlink" href="#verlfully-async-partial-rollout" title="Anchor link to this section for reference">¶</a></h3>
+<h4 id="_16">为什么需要<a class="headerlink" href="#_16" title="Anchor link to this section for reference">¶</a></h4>
+<p>Agent 任务的交互轮数与工具耗时差异很大。同步训练必须等待整批 rollout 完成，少量长任务就可能让其他资源空闲。异步训练消费已完成的样本组，未完成任务跨更新继续执行，从而减少整批同步屏障带来的等待。</p>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../agents/assets/uni-agent/fully-async-training.svg" data-desc-position="bottom"><img alt="全异步训练中 rollout、参数更新与后续 batch 的衔接" src="../agents/assets/uni-agent/fully-async-training.svg"></a></p>
+<p><em>根据演示截图复刻。横条表示单条数据的 rollout；暂停与参数同步的具体范围取决于训练模式。</em></p>
+<p>三个概念需要分开：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>决定什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Colocate</td>
+<td>训练与推理是否共享 GPU</td>
+</tr>
+<tr>
+<td>Fully Async</td>
+<td>采样与训练是否独立推进、持续重叠</td>
+</tr>
+<tr>
+<td>Partial Rollout</td>
+<td>未完成生成能否在中断后保留 token 前缀并继续</td>
+</tr>
+</tbody>
+</table>
+<p>Colocate Async 同样支持 Partial Rollout。它不是始终在同一组 GPU 上同时训练和推理，而是让任务状态持续存在，GPU 在不同阶段切换用途。</p>
+<h4 id="colocate-async">Colocate Async 如何切换<a class="headerlink" href="#colocate-async" title="Anchor link to this section for reference">¶</a></h4>
+<p><code>PPOTrainerColocateAsync.get_llm_client()</code> 返回 <code>FullyAsyncLLMServerClient</code>，经适配器注入 Gateway。当 ReplayBuffer 凑够当前更新需要的数据时：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-17-1">1</a></span>
+<span class="normal"><a href="#__codelineno-17-2">2</a></span>
+<span class="normal"><a href="#__codelineno-17-3">3</a></span>
+<span class="normal"><a href="#__codelineno-17-4">4</a></span>
+<span class="normal"><a href="#__codelineno-17-5">5</a></span>
+<span class="normal"><a href="#__codelineno-17-6">6</a></span>
+<span class="normal"><a href="#__codelineno-17-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1"></a>on_sample_end()
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2"></a>    → abort_replicas()：中断未完成生成并暂停接收处理
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3"></a>    → sleep_replicas()：释放推理权重和 KV cache 设备内存
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4"></a>    → Trainer 执行参数更新
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5"></a>    → on_step_end()
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6"></a>    → update_weights(global_steps)
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7"></a>    → resume_generation_replicas()
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>未完成任务的 Sandbox、消息和 Gateway Session 可以继续保留。释放 KV cache 不等于丢弃任务；恢复时可以根据保留的 token 重新 prefill。</p>
+<h4 id="partial-rollout">Partial Rollout 如何续生成<a class="headerlink" href="#partial-rollout" title="Anchor link to this section for reference">¶</a></h4>
+<p><code>FullyAsyncLLMServerClient.generate()</code> 在内部累积输出。一次底层生成被中断后，它保留已生成 token 与对应 logprob，以“原 prompt + 已生成 token”再次请求，并扣减剩余生成预算。</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-18-1">1</a></span>
+<span class="normal"><a href="#__codelineno-18-2">2</a></span>
+<span class="normal"><a href="#__codelineno-18-3">3</a></span>
+<span class="normal"><a href="#__codelineno-18-4">4</a></span>
+<span class="normal"><a href="#__codelineno-18-5">5</a></span>
+<span class="normal"><a href="#__codelineno-18-6">6</a></span>
+<span class="normal"><a href="#__codelineno-18-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1"></a>θ₀：prompt → 生成前 300 token → 被中断
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2"></a>                         ↓
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3"></a>                  训练并同步 θ₁
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4"></a>                         ↓
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5"></a>θ₁：prompt + 前 300 token → 生成剩余部分
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6"></a>                         ↓
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7"></a>                合并 token 与各自的 logprob
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>ReAct 仍然只等待一次 <code>model.query()</code>；中断与续生成被 verl 客户端隐藏，Gateway 获得合并后的输出。因此黑盒 harness 也不需要自行实现恢复逻辑，但 HTTP 超时必须能容纳等待时间。</p>
+<p>这里的 Partial Rollout <strong>不表示未完成前缀立即参与训练</strong>。当前 Uni-Agent Framework 正常路径仍等待 Runner 返回，再 finalize Session 并交付轨迹。它也不同于上下文压缩导致的轨迹拆分，或 <code>mask_unfinished_episode</code> 的损失掩码。</p>
+<h4 id="separate-async">Separate Async 如何持续重叠<a class="headerlink" href="#separate-async" title="Anchor link to this section for reference">¶</a></h4>
+<p><code>PPOTrainerSeparateAsync</code> 使用独立 rollout 资源池，让推理与训练重叠；同步权重仍需协调，并非永不暂停。它还支持将空闲训练 GPU 临时切换为推理副本：</p>
+<div class="language-text highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-19-1">1</a></span>
+<span class="normal"><a href="#__codelineno-19-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1"></a>数据不足：训练 GPU 临时参与 rollout → 加入负载均衡器
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2"></a>数据足够：移出路由 → 中断局部生成 → sleep → 返回训练
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>禁用 <code>actor_rollout_ref.hybrid_engine</code> 后，只由独立推理池提供 rollout。具体资源、批量和同步后端必须匹配所选模式。</p>
+<h4 id="_17">长尾仍受组与策略滞后约束<a class="headerlink" href="#_17" title="Anchor link to this section for reference">¶</a></h4>
+<p>例如 A、B 样本组已结束，C 仍在运行：Trainer 可以使用足够的已完成组更新参数，C 的模型请求随后使用新权重继续，无需重做已完成的工具操作。但当前 Framework 会等待同一个 prompt 的各 Session 返回后写入结果，因此同组长尾仍可能阻塞该组发布。</p>
+<p>异步也引入策略滞后：同一条轨迹可能跨多个权重版本。Gateway 保留真实采样 logprob 和版本跨度；verl 的 <code>ReplayBufferAsync</code> 根据配置淘汰过旧的已完成组（<code>drop</code>），或在在途任务达到阈值时等待它们完成（<code>wait</code>）。算法侧再根据配置进行重要性修正等处理。</p>
+<p>相关源码：</p>
+<ul>
+<li><code>verl/verl/trainer/ppo/v1/trainer_colocate_async.py</code>：采样结束与 step 结束的调度回调。</li>
+<li><code>verl/verl/trainer/ppo/v1/trainer_separate_async.py</code>：独立推理池与角色切换。</li>
+<li><code>verl/verl/workers/rollout/llm_server.py</code>：<code>FullyAsyncLLMServerClient</code> 中断续生成。</li>
+<li><code>verl/verl/checkpoint_engine/base.py</code>：推理副本暂停、显存释放、权重同步与恢复。</li>
+<li><code>verl/verl/trainer/ppo/v1/replay_buffer.py</code>：可采样组选择与滞后控制。</li>
+</ul>
+<h2 id="_18">源码阅读顺序<a class="headerlink" href="#_18" title="Anchor link to this section for reference">¶</a></h2>
+<p>先追踪一条任务，再理解分布式编排：</p>
+<ol>
+<li><code>tasks/swe_bench/task.py</code>：Task 如何组合环境、Agent 和评分。</li>
+<li><code>agents/react/agent.py</code>：模型与工具的交互循环。</li>
+<li><code>tools/base.py</code>、<code>sandbox/docker.py</code>：动作如何落到环境。</li>
+<li><code>framework/task_runner.py</code>、<code>tasks/config.py</code>：样本与配置如何进入任务。</li>
+<li><code>gateway/gateway.py</code>：一次模型请求的服务入口。</li>
+<li><code>gateway/session/session.py</code>、<code>codec.py</code>：上下文与 token 轨迹。</li>
+<li><code>framework/framework.py</code>、<code>entry.py</code>：并发、失败处理和训练衔接。</li>
+</ol>
+<h2 id="_19">参考资料<a class="headerlink" href="#_19" title="Anchor link to this section for reference">¶</a></h2>
+<ul>
+<li><a href="https://uni-agent.readthedocs.io/en/latest/">Uni-Agent 官方文档</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="最后更新">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="2026年11月11日 14:01:54 UTC">2026年11月11日</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="创建日期">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="2026年11月11日 14:01:54 UTC">2026年11月11日</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+  
+
+
+
+      
+    </article>
+  </div>
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © JintaoXu
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tracking", "navigation.instant", "navigation.tabs", "navigation.indexes", "navigation.top", "content.action.edit", "content.action.view", "content.code.copy", "search.suggest", "search.highlight", "search.share", "toc.follow"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../js/extra.js"></script>
+      
+        <script src="../../js/tablesort.js"></script>
+      
+        <script src="../../js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

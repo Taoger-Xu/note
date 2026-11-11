@@ -1,0 +1,2395 @@
+<!DOCTYPE html><html lang="zh" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="整理 MHA、MQA、GQA、MLA、DSA 等注意力变体，以及 KV Cache、计算效率和推理性能的对比。">
+      
+      
+        <meta name="author" content="Jintao Xu">
+      
+      
+        <link rel="canonical" href="https://taoger-xu.github.io/note/blog/attention-variants/">
+      
+      
+        <link rel="prev" href="../zero-series/">
+      
+      
+        <link rel="next" href="../uni-agent/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/avatar.jpg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>注意力变体与高效注意力：从 MHA、GQA 到 MLA、DSA - Jintaoxu's Note</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M8.17%202.76A10.1%2010.1%200%200%201%2012%202c1.31%200%202.61.26%203.83.76%201.21.5%202.31%201.24%203.24%202.17s1.67%202.03%202.17%203.24c.5%201.22.76%202.52.76%203.83%200%202.65-1.05%205.2-2.93%207.07A9.97%209.97%200%200%201%2012%2022a10.1%2010.1%200%200%201-3.83-.76%2010%2010%200%200%201-3.24-2.17A9.97%209.97%200%200%201%202%2012c0-2.65%201.05-5.2%202.93-7.07.93-.93%202.03-1.67%203.24-2.17M12%2017l1.56-3.42L17%2012l-3.44-1.56L12%207l-1.57%203.44L7%2012l3.43%201.58z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=LXGW+WenKai+Screen:300,300i,400,400i,700,700i%7CMonaspace+Krypton:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"LXGW WenKai Screen";--md-code-font:"Monaspace Krypton"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+      <link rel="stylesheet" href="../../css/theme.css">
+    
+      <link rel="stylesheet" href="../../css/home.css">
+    
+      <link rel="stylesheet" href="../../css/topics.css">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+SC:300,300i,400,400i,700,700i&amp;display=fallback">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","UA-XXXXXXXX-X"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","UA-XXXXXXXX-X",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXX-X",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mhagqa-mladsa" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="Jintaoxu's Note" class="md-header__button md-logo" aria-label="Jintaoxu's Note" data-md-component="logo">
+      
+  <img src="../../assets/avatar.jpg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Jintaoxu's Note
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              注意力变体与高效注意力：从 MHA、GQA 到 MLA、DSA
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard="" data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Taoger-Xu/note" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    note
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../course/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Course
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden="">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Jintaoxu's Note" class="md-nav__button md-logo" aria-label="Jintaoxu's Note" data-md-component="logo">
+      
+  <img src="../../assets/avatar.jpg" alt="logo">
+
+    </a>
+    Jintaoxu's Note
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Taoger-Xu/note" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    note
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked="">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Blog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    归档
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    归档
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../archive/2026/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分类
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    分类
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    分布式训练
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%90%8E%E8%AE%AD%E7%BB%83/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    后训练
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    多模态
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    强化学习
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E6%8E%A8%E7%90%86%E7%B3%BB%E7%BB%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    推理系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E6%A8%A1%E5%9E%8B%E6%9E%B6%E6%9E%84/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    模型架构
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E8%AE%AD%E7%BB%83%E7%B3%BB%E7%BB%9F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    训练系统
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../category/%E9%AB%98%E6%95%88%E6%B3%A8%E6%84%8F%E5%8A%9B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    高效注意力
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Course
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Course
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/cs336/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CS336
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CS336
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs336/lecture/parallelism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_3" id="__nav_3_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lab
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lab
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs336/lab/parallelism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cmu-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CMU Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../course/cs329z/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CS329Z
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CS329Z
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../course/cs329z/lecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lectures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        背景：为什么需要高效注意力
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MHA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mqa-mha-gqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MQA：从 MHA 到 GQA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GQA
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GQA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        把分组共享写成矩阵乘法
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kv-gqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        合并 K、V 投影：把 GQA 写成两个矩阵的乘积
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从固定选择与复制矩阵，引出潜空间表示
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mla" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MLA
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MLA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从图中理解：共享潜在表示，但各头的 KV 不必相同
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mhagqamqa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        对照 MHA、GQA、MQA：推理时究竟缓存什么
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从额外矩阵乘法到注意力算子
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qk-key-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q/K 侧吸收：把 Key 上投影合入 Query 投影
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        V/O 侧吸收：分块对角矩阵乘输出矩阵
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        吸收并不意味着没有额外计算
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RoPE 为什么会妨碍简单的矩阵吸收
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rope-576" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        解耦 RoPE：图中的 576 应怎样理解
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gqa-mla" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        从 GQA 到 MLA 的关键变化
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DSA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        各种注意力机制的对比
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        实践与实现记录
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        总结
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考资料
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+  <div class="md-content md-content--post" data-md-component="content">
+    <div class="md-sidebar md-sidebar--post" data-md-component="sidebar" data-md-type="navigation">
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner md-post">
+          <nav class="md-nav md-nav--primary">
+            <div class="md-post__back">
+              <div class="md-nav__title md-nav__container">
+                <a href="../" class="md-nav__link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+                  <span class="md-ellipsis">
+                    回到主页
+                  </span>
+                </a>
+              </div>
+            </div>
+            
+              <div class="md-post__authors md-typeset">
+                
+                  <div class="md-profile md-post__profile">
+                    <span class="md-author md-author--long">
+                      <img src="https://avatars.githubusercontent.com/Taoger-Xu" alt="JintaoXu">
+                    </span>
+                    <span class="md-profile__description">
+                      <strong>
+                        
+                          JintaoXu
+                        
+                      </strong>
+                      <br>
+                      Creator
+                    </span>
+                  </div>
+                
+              </div>
+            
+            <ul class="md-post__meta md-nav__list">
+              <li class="md-nav__item md-nav__item--section">
+                <div class="md-post__title">
+                  <span class="md-ellipsis">
+                    元数据
+                  </span>
+                </div>
+                <nav class="md-nav">
+                  <ul class="md-nav__list">
+                    <li class="md-nav__item">
+                      <div class="md-nav__link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 19H5V8h14m-3-7v2H8V1H6v2H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1V1m-1 11h-5v5h5z"></path></svg>
+                        <time datetime="2026-11-03 00:00:00+00:00" class="md-ellipsis">2026年11月3日</time>
+                      </div>
+                    </li>
+                    
+                    
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3v15h3V3zm3 2 4 13 3-1-4-13zM5 5v13h3V5zM3 19v2h18v-2z"></path></svg>
+                          <span class="md-ellipsis">
+                            分类于
+                            
+                              <a href="../category/%E6%A8%A1%E5%9E%8B%E6%9E%B6%E6%9E%84/">模型架构</a>, 
+                              <a href="../category/%E9%AB%98%E6%95%88%E6%B3%A8%E6%84%8F%E5%8A%9B/">高效注意力</a></span>
+                        </div>
+                      </li>
+                    
+                    
+                      
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 20a8 8 0 0 0 8-8 8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10 10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67-.75 1.23L11 13V7z"></path></svg>
+                          <span class="md-ellipsis">
+                            
+                              需要 13 分钟阅读时间
+                            
+                          </span>
+                        </div>
+                      </li>
+                    
+                  </ul>
+                </nav>
+              </li>
+            </ul>
+            
+          </nav>
+          
+        </div>
+      </div>
+    </div>
+    <article class="md-content__inner md-typeset">
+      
+        
+  
+
+
+
+  
+    <a href="https://github.com/Taoger-Xu/note/edit/master/docs/blog/posts/architecture/attention-variants.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/Taoger-Xu/note/raw/master/docs/blog/posts/architecture/attention-variants.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+    </a>
+  
+
+
+<h1 id="mhagqa-mladsa">注意力变体与高效注意力：从 MHA、GQA 到 MLA、DSA<a class="headerlink" href="#mhagqa-mladsa" title="Anchor link to this section for reference">¶</a></h1>
+<!-- 在这里填写文章摘要，摘要将显示在 Blog 列表中。 -->
+
+<!-- more -->
+
+<h2 id="_1">背景：为什么需要高效注意力<a class="headerlink" href="#_1" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="mha">MHA<a class="headerlink" href="#mha" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="mqa-mha-gqa">MQA：从 MHA 到 GQA<a class="headerlink" href="#mqa-mha-gqa" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="gqa">GQA<a class="headerlink" href="#gqa" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="_2">把分组共享写成矩阵乘法<a class="headerlink" href="#_2" title="Anchor link to this section for reference">¶</a></h3>
+<p>以 <strong>4 个 Query 头、2 个 KV 头</strong>为例，前两个 Query 头共享第一组 K、V，后两个 Query 头共享第二组 K、V。这里的重复是逻辑上的头映射，不要求实现中真的复制并缓存四份 KV。</p>
+<!-- 配图预留：将本节的 GQA 分组与矩阵示意图保存为 assets/attention-variants/gqa-matrix.png 后，在此插入。 -->
+
+<p>设输入 <span class="arithmatex">\(X\in\mathbb{R}^{T\times d}\)</span>，每个 Key 头的维度为 <span class="arithmatex">\(d_k\)</span>，每个 Value 头的维度为 <span class="arithmatex">\(d_v\)</span>。GQA 先生成两组 KV：</p>
+<div class="arithmatex">\[
+K_g=[K_1,K_2]=XW_g^K,
+\qquad W_g^K\in\mathbb{R}^{d\times 2d_k},
+\]</div>
+<div class="arithmatex">\[
+V_g=[V_1,V_2]=XW_g^V,
+\qquad W_g^V\in\mathbb{R}^{d\times 2d_v}.
+\]</div>
+<p>定义一个固定的分块复制矩阵：</p>
+<div class="arithmatex">\[
+R_K=
+\begin{bmatrix}
+I_{d_k} &amp; I_{d_k} &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; I_{d_k} &amp; I_{d_k}
+\end{bmatrix}
+\in\mathbb{R}^{2d_k\times 4d_k}.
+\]</div>
+<p>于是，为四个 Query 头提供的 Key 可以统一写成：</p>
+<div class="arithmatex">\[
+\widetilde K=[K_1,K_1,K_2,K_2]
+=K_gR_K
+=XW_g^KR_K.
+\]</div>
+<p>Value 的处理完全类似：</p>
+<div class="arithmatex">\[
+R_V=
+\begin{bmatrix}
+I_{d_v} &amp; I_{d_v} &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; I_{d_v} &amp; I_{d_v}
+\end{bmatrix},
+\qquad
+\widetilde V=[V_1,V_1,V_2,V_2]
+=XW_g^VR_V.
+\]</div>
+<p>这就把“几个头共享同一组 KV”的结构，转成了“较窄的投影矩阵，乘上一个固定复制矩阵”。如果从完整多头投影的角度看，GQA 的等效权重是：</p>
+<div class="arithmatex">\[
+\widetilde W^K=W_g^KR_K,
+\qquad
+\widetilde W^V=W_g^VR_V.
+\]</div>
+<p>它们的列块被显式绑定，例如：</p>
+<div class="arithmatex">\[
+\widetilde W^K=
+[W_1^K,W_1^K,W_2^K,W_2^K].
+\]</div>
+<p>因此，<strong>GQA 的节省来自头间共享：同组的 Key 完全相同，Value 也完全相同。</strong> 推理时只需要保存两组原始 KV，复制矩阵只是帮助理解等效计算。</p>
+<h3 id="kv-gqa">合并 K、V 投影：把 GQA 写成两个矩阵的乘积<a class="headerlink" href="#kv-gqa" title="Anchor link to this section for reference">¶</a></h3>
+<p>图中又向前走了一步：不再分别计算 <span class="arithmatex">\(XW_g^K\)</span> 和 <span class="arithmatex">\(XW_g^V\)</span>，而是把两组权重按列拼接，得到一次联合投影：</p>
+<div class="arithmatex">\[
+W_{\downarrow}^{KV}=[W_g^K,W_g^V]
+\in\mathbb{R}^{d\times(2d_k+2d_v)},
+\]</div>
+<div class="arithmatex">\[
+C_g^{KV}=XW_{\downarrow}^{KV}
+=[K_1,K_2,V_1,V_2].
+\]</div>
+<!-- 配图预留：GQA 的 KV 联合投影与矩阵分解图，建议文件名 assets/attention-variants/gqa-joint-factorization.png。 -->
+
+<p>其中的 <span class="arithmatex">\(\downarrow\)</span> 表示相对于展开后的完整多头 KV，使用较窄的中间表示；这不要求 <span class="arithmatex">\(2d_k+2d_v\)</span> 一定小于输入维度 <span class="arithmatex">\(d\)</span>。</p>
+<p>接下来，让 Key 和 Value 各自从这个联合表示中选择对应部分，并按照分组规则复制。定义：</p>
+<div class="arithmatex">\[
+W_{\uparrow}^{K}=
+\begin{bmatrix}
+R_K\\
+0_{2d_v\times4d_k}
+\end{bmatrix}
+\in\mathbb{R}^{(2d_k+2d_v)\times4d_k},
+\]</div>
+<div class="arithmatex">\[
+W_{\uparrow}^{V}=
+\begin{bmatrix}
+0_{2d_k\times4d_v}\\
+R_V
+\end{bmatrix}
+\in\mathbb{R}^{(2d_k+2d_v)\times4d_v}.
+\]</div>
+<p>例如，Key 的上投影矩阵展开后就是：</p>
+<div class="arithmatex">\[
+W_{\uparrow}^{K}=
+\begin{bmatrix}
+I_{d_k} &amp; I_{d_k} &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; I_{d_k} &amp; I_{d_k}\\
+0_{d_v\times d_k} &amp; 0_{d_v\times d_k} &amp; 0_{d_v\times d_k} &amp; 0_{d_v\times d_k}\\
+0_{d_v\times d_k} &amp; 0_{d_v\times d_k} &amp; 0_{d_v\times d_k} &amp; 0_{d_v\times d_k}
+\end{bmatrix}.
+\]</div>
+<p>前两行块分别选择 <span class="arithmatex">\(K_1\)</span>、<span class="arithmatex">\(K_2\)</span> 并复制，后两行块屏蔽 <span class="arithmatex">\(V_1\)</span>、<span class="arithmatex">\(V_2\)</span>。注意这里的“行”是分块矩阵的行块，维度分别为 <span class="arithmatex">\(d_k,d_k,d_v,d_v\)</span>。</p>
+<p>因此，GQA 的完整头表示可以写成：</p>
+<div class="arithmatex">\[
+\boxed{
+\widetilde K=XW_{\downarrow}^{KV}W_{\uparrow}^{K},
+\qquad
+\widetilde V=XW_{\downarrow}^{KV}W_{\uparrow}^{V}
+}
+\]</div>
+<p>这正是图中矩阵乘积的含义。与 MHA 的直接投影比较：</p>
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>完整 Key 表示</th>
+<th>完整 Value 表示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MHA</td>
+<td><span class="arithmatex">\(XW^K\)</span></td>
+<td><span class="arithmatex">\(XW^V\)</span></td>
+</tr>
+<tr>
+<td>GQA 的联合投影视角</td>
+<td><span class="arithmatex">\(XW_{\downarrow}^{KV}W_{\uparrow}^{K}\)</span></td>
+<td><span class="arithmatex">\(XW_{\downarrow}^{KV}W_{\uparrow}^{V}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>这里仍是原来的 GQA：<span class="arithmatex">\(W_{\downarrow}^{KV}\)</span> 可训练，<span class="arithmatex">\(W_{\uparrow}^{K}\)</span>、<span class="arithmatex">\(W_{\uparrow}^{V}\)</span> 则是由 <span class="arithmatex">\(I\)</span> 和 <span class="arithmatex">\(0\)</span> 构成的固定选择、复制矩阵。把 K、V 合并为一次投影只是等价重写，并没有在原有 GQA 之上再减少缓存。</p>
+<p>推广到 <span class="arithmatex">\(n_g\)</span> 个 KV 组和 <span class="arithmatex">\(h\)</span> 个 Query 头，中间宽度为：</p>
+<div class="arithmatex">\[
+m=n_g(d_k+d_v),
+\qquad
+W_{\downarrow}^{KV}\in\mathbb{R}^{d\times m}.
+\]</div>
+<p>矩阵分解揭示了共享带来的秩约束。例如，在上面的两组 KV 例子中：</p>
+<div class="arithmatex">\[
+\operatorname{rank}(\widetilde W^K)
+=\operatorname{rank}(W_g^KR_K)
+\leq\min(d,2d_k).
+\]</div>
+<p>因此可以从低秩分解的角度理解这种结构；但“两个矩阵相乘”本身并不等于严格低秩，还要比较中间维度、实际秩和原矩阵的最大可能秩。</p>
+<h3 id="_3">从固定选择与复制矩阵，引出潜空间表示<a class="headerlink" href="#_3" title="Anchor link to this section for reference">¶</a></h3>
+<p>现在只需要放松上面的结构约束：将固定的 <span class="arithmatex">\(W_{\uparrow}^{K}\)</span>、<span class="arithmatex">\(W_{\uparrow}^{V}\)</span> 改成可学习矩阵，再把中间宽度设为可选择的潜空间维度 <span class="arithmatex">\(d_c\)</span>。中间表示就不必显式对应 <span class="arithmatex">\([K_1,K_2,V_1,V_2]\)</span>，而可以学习同时服务于所有 Key、Value 头的潜在特征。</p>
+<p>这就从 GQA 的“固定选择与复制”，走向 MLA 的“KV 联合压缩与可学习上投影”：</p>
+<div class="arithmatex">\[
+C^{KV}=XW^{DKV},
+\qquad W^{DKV}\in\mathbb{R}^{d\times d_c},
+\]</div>
+<div class="arithmatex">\[
+K^C=C^{KV}W^{UK},
+\qquad W^{UK}\in\mathbb{R}^{d_c\times hd_k},
+\]</div>
+<div class="arithmatex">\[
+V=C^{KV}W^{UV},
+\qquad W^{UV}\in\mathbb{R}^{d_c\times hd_v}.
+\]</div>
+<p>其中 <span class="arithmatex">\(h\)</span> 为 Query 头数，<span class="arithmatex">\(d_c\)</span> 为潜空间维度。每个头对应上投影矩阵中的不同列块，因此可以得到不同的 Key 和 Value。</p>
+<p><strong>固定的头间复制 → 可学习的上投影 → K、V 联合潜空间</strong>，这条路线可以引出 MLA 的核心思想：用低维联合表示压缩 KV。这里是架构设计上的推导思路，并不意味着任意 GQA 或 MHA 都能无损转换成指定低秩的 MLA；联合潜空间需要通过训练学习。</p>
+<h2 id="mla">MLA<a class="headerlink" href="#mla" title="Anchor link to this section for reference">¶</a></h2>
+<h3 id="kv">从图中理解：共享潜在表示，但各头的 KV 不必相同<a class="headerlink" href="#kv" title="Anchor link to this section for reference">¶</a></h3>
+<p>承接前面的矩阵视角，GQA 通过固定的选择与复制矩阵，让同组 Query 使用完全相同的 K、V。MLA 则将上投影改为可学习映射：<strong>所有头共享一个低维潜在表示，但每个头可以从中得到不同的 Key 和 Value。</strong></p>
+<!-- 首张 MLA 联合下投影与各头上投影结构图预留，建议保存为 assets/attention-variants/mla-projection.png。图中 576 的口径见本节后文。 -->
+
+<p>沿着结构图自下而上读，可以分为三个步骤。以下采用行向量约定，先只讨论内容分支，并省略归一化等实现细节。</p>
+<p><strong>第一步：联合下投影。</strong> 输入 <span class="arithmatex">\(X\in\mathbb{R}^{T\times d}\)</span> 经过一个较窄的投影，得到：</p>
+<div class="arithmatex">\[
+C^{KV}=XW_{\downarrow}^{KV},
+\qquad
+W_{\downarrow}^{KV}\in\mathbb{R}^{d\times d_c},
+\qquad
+C^{KV}\in\mathbb{R}^{T\times d_c}.
+\]</div>
+<p>这里 <span class="arithmatex">\(C^{KV}\)</span> 不再要求显式对应 GQA 中的 <span class="arithmatex">\([K_1,K_2,V_1,V_2]\)</span>。它是通过训练学习的联合表示，可以同时承载构造 K、V 所需的信息。</p>
+<p><strong>第二步：分别上投影。</strong> 设有 <span class="arithmatex">\(h\)</span> 个头，内容 Key 的每头维度为 <span class="arithmatex">\(d_k\)</span>，Value 的每头维度为 <span class="arithmatex">\(d_v\)</span>：</p>
+<div class="arithmatex">\[
+K^C=C^{KV}W_{\uparrow}^{K},
+\qquad W_{\uparrow}^{K}\in\mathbb{R}^{d_c\times hd_k},
+\]</div>
+<div class="arithmatex">\[
+V=C^{KV}W_{\uparrow}^{V},
+\qquad W_{\uparrow}^{V}\in\mathbb{R}^{d_c\times hd_v}.
+\]</div>
+<p>将上投影按头分块：</p>
+<div class="arithmatex">\[
+W_{\uparrow}^{K}=[W_{\uparrow,1}^{K},\ldots,W_{\uparrow,h}^{K}],
+\qquad
+W_{\uparrow}^{V}=[W_{\uparrow,1}^{V},\ldots,W_{\uparrow,h}^{V}].
+\]</div>
+<p>对于第 <span class="arithmatex">\(j\)</span> 个历史 token 和第 <span class="arithmatex">\(i\)</span> 个头：</p>
+<div class="arithmatex">\[
+k_{j,i}^{C}=c_j^{KV}W_{\uparrow,i}^{K},
+\qquad
+v_{j,i}=c_j^{KV}W_{\uparrow,i}^{V}.
+\]</div>
+<p>由于不同头使用不同的可学习列块，图中的 <span class="arithmatex">\(K_1,K_2,K_3,K_4\)</span> 和 <span class="arithmatex">\(V_1,V_2,V_3,V_4\)</span> 可以各不相同，不再像 GQA 那样固定重复。</p>
+<p><strong>第三步：多头注意力与输出投影。</strong> 先用当前 Query 对历史 Key 计算注意力，再聚合 Value，最终得到：</p>
+<div class="arithmatex">\[
+O=[O_1,\ldots,O_h],
+\qquad
+\Delta X=OW^O,
+\qquad
+W^O\in\mathbb{R}^{hd_v\times d}.
+\]</div>
+<p>这里图示的 <span class="arithmatex">\(Q=XW^Q\)</span> 用于突出 KV 压缩；完整 DeepSeek-V2 还使用了 Query 的低秩投影，并为 Query、Key 设置解耦的位置分支。<a href="https://arxiv.org/html/2405.04434v5#S2.SS1">DeepSeek-V2 第 2.1 节</a></p>
+<h3 id="mhagqamqa">对照 MHA、GQA、MQA：推理时究竟缓存什么<a class="headerlink" href="#mhagqamqa" title="Anchor link to this section for reference">¶</a></h3>
+<figure>
+<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../architecture/assets/attention-variants/mla-cache-comparison.png" data-desc-position="bottom"><img alt="MHA、GQA、MQA 与 MLA 的 KV Cache 对比：阴影表示推理时缓存的张量" loading="lazy" src="../architecture/assets/attention-variants/mla-cache-comparison.png"></a></p>
+<figcaption>DeepSeek-V2 论文 Figure 3。阴影标记需要缓存的部分；MLA 右侧缓存联合潜变量，而不是所有展开后的 Key、Value。此图省略了位置分支。<a href="https://arxiv.org/html/2405.04434v5#S2.F3">原图来源</a></figcaption>
+</figure>
+<p>这张对比图应关注阴影，而不只是竖条数量：</p>
+<table>
+<thead>
+<tr>
+<th>结构</th>
+<th>头之间的共享方式</th>
+<th>每层、每 token 的缓存元素数，暂忽略额外位置分支</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MHA</td>
+<td>各 Query 头使用各自的 K、V</td>
+<td><span class="arithmatex">\(h(d_k+d_v)\)</span></td>
+</tr>
+<tr>
+<td>GQA</td>
+<td>每组 Query 共享一组 K、V</td>
+<td><span class="arithmatex">\(n_g(d_k+d_v)\)</span></td>
+</tr>
+<tr>
+<td>MQA</td>
+<td>所有 Query 头共享一组 K、V</td>
+<td><span class="arithmatex">\(d_k+d_v\)</span></td>
+</tr>
+<tr>
+<td>MLA</td>
+<td>所有头共享联合潜变量，各头使用不同上投影</td>
+<td><span class="arithmatex">\(d_c\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>GQA、MQA 通过减少独立 KV 头数来减少缓存；MLA 则改变缓存表示，保存低维联合潜变量。<strong>图中的多个 K、V 表示各头的逻辑表示，不意味着推理时必须把它们全部展开并长期缓存。</strong></p>
+<h3 id="_4">从额外矩阵乘法到注意力算子<a class="headerlink" href="#_4" title="Anchor link to this section for reference">¶</a></h3>
+<p>低秩分解表面上增加了下投影、上投影。如果每次解码都先做：</p>
+<div class="arithmatex">\[
+K_i=C^{KV}W_{\uparrow,i}^{K},
+\qquad
+V_i=C^{KV}W_{\uparrow,i}^{V},
+\]</div>
+<p>再把完整 K、V 交给注意力算子，就需要反复读取历史潜变量、恢复每个头的 KV，并写出中间张量。MLA 的推理实现不必采用这条计算路径。</p>
+<p>先忽略位置编码，设 <span class="arithmatex">\(C^{KV}\in\mathbb{R}^{N\times d_c}\)</span> 是历史缓存，当前 Query 矩阵为 <span class="arithmatex">\(Q_i\)</span>，第 <span class="arithmatex">\(i\)</span> 个头的计算是：</p>
+<div class="arithmatex">\[
+A_i=\operatorname{Softmax}\left(
+\frac{Q_i(C^{KV}W_{\uparrow,i}^{K})^{\mathsf T}}{\sqrt{d_k}}+M
+\right),
+\]</div>
+<div class="arithmatex">\[
+O_i=A_i(C^{KV}W_{\uparrow,i}^{V}).
+\]</div>
+<p>其中 <span class="arithmatex">\(M\)</span> 为可见性掩码，Softmax 对历史 token 维度归一化。利用结合律，可以改成：</p>
+<div class="arithmatex">\[
+\widehat Q_i=Q_i(W_{\uparrow,i}^{K})^{\mathsf T},
+\qquad
+A_i=\operatorname{Softmax}\left(
+\frac{\widehat Q_i(C^{KV})^{\mathsf T}}{\sqrt{d_k}}+M
+\right),
+\]</div>
+<div class="arithmatex">\[
+Z_i=A_iC^{KV},
+\qquad
+O_i=Z_iW_{\uparrow,i}^{V}.
+\]</div>
+<p>现在历史 Key 和 Value 都由同一份 <span class="arithmatex">\(C^{KV}\)</span> 提供：前者参与分数计算，后者参与加权聚合；各头仍有各自的 Query 和注意力分布。无需先为全部历史 token 显式恢复 <span class="arithmatex">\(K_i\)</span>、<span class="arithmatex">\(V_i\)</span>。</p>
+<div class="admonition note">
+<p class="admonition-title">算子融合与矩阵吸收是两个层次</p>
+<p><strong>矩阵吸收</strong>改变线性映射的组合方式，用结合律合并权重或转移投影位置；<strong>算子融合</strong>则是在实现中，将缓存读取、分数计算、在线 Softmax 和加权聚合等操作组织进更少的 GPU kernel，减少中间结果的写回。代数上可合并，不代表实现必须物化合并后的大权重，也不代表所有计算会变成一个 kernel。</p>
+</div>
+<p>例如，面向低维缓存的注意力 kernel 可以分块读取 <span class="arithmatex">\(C^{KV}\)</span>，计算 <span class="arithmatex">\(\widehat Q_i(C^{KV})^{\mathsf T}\)</span>，用在线 Softmax 更新归一化统计量，再累积 <span class="arithmatex">\(Z_i\)</span>，从而不把完整分数矩阵和概率矩阵写回显存。这里是在解释可行的计算组织，不代表任意现成的注意力算子都直接支持这些维度与共享方式。</p>
+<h3 id="qk-key-query">Q/K 侧吸收：把 Key 上投影合入 Query 投影<a class="headerlink" href="#qk-key-query" title="Anchor link to this section for reference">¶</a></h3>
+<p>第一张图进一步把 Query 也写成低秩投影。为避免与 KV 潜变量混淆，令 Query 潜空间维度为 <span class="arithmatex">\(d_q\)</span>：</p>
+<div class="arithmatex">\[
+C^Q=XW_{\downarrow}^{Q},
+\qquad
+W_{\downarrow}^{Q}\in\mathbb{R}^{d\times d_q},
+\]</div>
+<div class="arithmatex">\[
+Q_i=C^QW_{\uparrow,i}^{Q},
+\qquad
+W_{\uparrow,i}^{Q}\in\mathbb{R}^{d_q\times d_k}.
+\]</div>
+<p>为突出线性部分，暂省略潜变量归一化；实现中若存在归一化，不能把权重直接穿过这个非线性操作合并。代入分数计算：</p>
+<div class="arithmatex">\[
+Q_iK_i^{\mathsf T}
+=C^QW_{\uparrow,i}^{Q}
+\left(C^{KV}W_{\uparrow,i}^{K}\right)^{\mathsf T}
+=C^Q
+\underbrace{W_{\uparrow,i}^{Q}(W_{\uparrow,i}^{K})^{\mathsf T}}_{\overline W_i^Q}
+(C^{KV})^{\mathsf T}.
+\]</div>
+<p>这里合并的是两个与位置无关的权重：</p>
+<div class="arithmatex">\[
+\overline W_i^Q
+=W_{\uparrow,i}^{Q}(W_{\uparrow,i}^{K})^{\mathsf T}
+\in\mathbb{R}^{d_q\times d_c}.
+\]</div>
+<p>因此内容分支可以直接计算：</p>
+<div class="arithmatex">\[
+\boxed{
+\widehat Q_i=C^Q\overline W_i^Q,
+\qquad
+A_i=\operatorname{Softmax}\left(
+\frac{\widehat Q_i(C^{KV})^{\mathsf T}}{\sqrt{d_k}}+M
+\right).
+}
+\]</div>
+<p>固定权重推理时，可预先构造这个合并矩阵；训练时权重会变化，不能把预先构造的副本当作永远不变的权重。如果原本使用直接 Query 投影 <span class="arithmatex">\(Q_i=XW_i^Q\)</span>，也可以类似写成 <span class="arithmatex">\(X\bigl(W_i^Q(W_{\uparrow,i}^{K})^{\mathsf T}\bigr)\)</span>。</p>
+<p>这就是“Key 上投影被 Query 吸收”：不是删掉 Key 上投影的作用，而是把它从所有历史 Key 的恢复计算，转移到当前 Query 的线性映射中。当前只解码少量新 token、历史缓存很长时，这个计算位置的变化尤其重要。</p>
+<!-- 配图预留：第一张 Q/K 侧矩阵吸收推导图，建议文件名 assets/attention-variants/mla-qk-absorption.png。 -->
+
+<p>注意，吸收后点积在 <span class="arithmatex">\(d_c\)</span> 维空间进行，但它仍等于原来 <span class="arithmatex">\(d_k\)</span> 维内容向量的点积，因此此处保留原缩放 <span class="arithmatex">\(\sqrt{d_k}\)</span>，不能自动替换为 <span class="arithmatex">\(\sqrt{d_c}\)</span>。</p>
+<h3 id="vo">V/O 侧吸收：分块对角矩阵乘输出矩阵<a class="headerlink" href="#vo" title="Anchor link to this section for reference">¶</a></h3>
+<p>第二张图展示的是 Value 侧。由于每个头的 <span class="arithmatex">\(A_i\)</span> 不同，先在潜空间分别计算：</p>
+<div class="arithmatex">\[
+Z_i=A_iC^{KV}\in\mathbb{R}^{T_q\times d_c}.
+\]</div>
+<p>每个头的输出为 <span class="arithmatex">\(O_i=Z_iW_{\uparrow,i}^{V}\)</span>，拼接之后：</p>
+<div class="arithmatex">\[
+[O_1,\ldots,O_h]
+=[Z_1,\ldots,Z_h]
+\operatorname{Diag}\left(
+W_{\uparrow,1}^{V},\ldots,W_{\uparrow,h}^{V}
+\right).
+\]</div>
+<p>以四个头为例，图中的矩阵就是：</p>
+<div class="arithmatex">\[
+D_V=
+\begin{bmatrix}
+W_{\uparrow,1}^{V} &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; W_{\uparrow,2}^{V} &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; W_{\uparrow,3}^{V} &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; W_{\uparrow,4}^{V}
+\end{bmatrix}.
+\]</div>
+<p>每个非零块的维度是 <span class="arithmatex">\(d_c\times d_v\)</span>，所以这个分块对角矩阵整体为 <span class="arithmatex">\(hd_c\times hd_v\)</span>，不要求是方阵。再乘输出投影：</p>
+<div class="arithmatex">\[
+\Delta X
+=[Z_1,\ldots,Z_h]D_VW^O
+=[Z_1,\ldots,Z_h]\overline W^O,
+\]</div>
+<div class="arithmatex">\[
+\boxed{
+\overline W^O=D_VW^O
+\in\mathbb{R}^{hd_c\times d}.
+}
+\]</div>
+<p>这就是图中黄色方框的意义：将 Value 上投影和输出投影合成一个线性映射。若把 <span class="arithmatex">\(W^O\)</span> 按头分成行块 <span class="arithmatex">\(W_i^O\in\mathbb{R}^{d_v\times d}\)</span>，则等价地有：</p>
+<div class="arithmatex">\[
+\Delta X
+=\sum_{i=1}^{h}
+(A_iC^{KV})
+\underbrace{\left(W_{\uparrow,i}^{V}W_i^O\right)}_{\text{每个头合并后的输出映射}}.
+\]</div>
+<p>不同头的 <span class="arithmatex">\(A_i\)</span> 不能直接当成同一个矩阵；这里能够提取出来的是与 token 位置无关的上投影权重，而不是 Softmax 运算。结合律也不能用于把矩阵任意移进或移出 Softmax。</p>
+<!-- 配图预留：第二张 V/O 侧分块矩阵吸收推导图，建议文件名 assets/attention-variants/mla-vo-absorption.png。 -->
+
+<h3 id="_5">吸收并不意味着没有额外计算<a class="headerlink" href="#_5" title="Anchor link to this section for reference">¶</a></h3>
+<p>吸收保留了原映射的作用，收益主要在于可以直接读取压缩缓存、避免恢复历史完整 KV，并减少部分中间张量。它不保证所有阶段的 FLOPs、权重体积都更小：</p>
+<ul>
+<li>潜空间维度 <span class="arithmatex">\(d_c\)</span> 可能大于单头维度 <span class="arithmatex">\(d_k\)</span> 或 <span class="arithmatex">\(d_v\)</span>，潜空间点积、加权聚合也有成本。</li>
+<li>显式构造的 <span class="arithmatex">\(\overline W^O\)</span> 有 <span class="arithmatex">\(hd_c\times d\)</span> 个元素，可能比原来的 <span class="arithmatex">\(W^O\)</span> 更大；实际可选择保留因子化权重、分阶段计算或使用专门 kernel。</li>
+<li>Prefill 通常有较多 Query，decode 通常只有少量新 Query，两者的计算量和带宽瓶颈不同，因此可以选择不同实现路径。</li>
+</ul>
+<p>因此，应分别比较预填充与解码性能、KV Cache 容量、内存读写和临时显存，而不能仅由“吸收了两个矩阵”就推断固定加速倍数。</p>
+<h3 id="rope">RoPE 为什么会妨碍简单的矩阵吸收<a class="headerlink" href="#rope" title="Anchor link to this section for reference">¶</a></h3>
+<p>这里的“不兼容”具体是指：<strong>直接在展开后的内容 Q、K 上施加 RoPE，会破坏前面一次性合并为固定权重的简单路径</strong>，不是说 MLA 完全不能使用位置编码。</p>
+<p>继续采用行向量约定，定义位置 <span class="arithmatex">\(t\)</span> 的旋转矩阵为 <span class="arithmatex">\(R_t\)</span>：</p>
+<div class="arithmatex">\[
+q_{t,i}^{\mathrm{rope}}=q_{t,i}R_t,
+\qquad
+k_{j,i}^{\mathrm{rope}}=k_{j,i}R_j.
+\]</div>
+<p>将 <span class="arithmatex">\(q_{t,i}=c_t^QW_{\uparrow,i}^{Q}\)</span> 和 <span class="arithmatex">\(k_{j,i}=c_j^{KV}W_{\uparrow,i}^{K}\)</span> 代入：</p>
+<div class="arithmatex">\[
+\begin{aligned}
+q_{t,i}^{\mathrm{rope}}
+(k_{j,i}^{\mathrm{rope}})^{\mathsf T}
+&amp;=q_{t,i}R_tR_j^{\mathsf T}k_{j,i}^{\mathsf T}\\
+&amp;=c_t^QW_{\uparrow,i}^{Q}
+\underbrace{R_tR_j^{\mathsf T}}_{\text{依赖 Query 与 Key 的位置}}
+(W_{\uparrow,i}^{K})^{\mathsf T}
+(c_j^{KV})^{\mathsf T}.
+\end{aligned}
+\]</div>
+<p>对标准 RoPE，<span class="arithmatex">\(R_tR_j^{\mathsf T}\)</span> 编码相对位置关系。关键在于，它位于两个上投影权重之间，而且随历史位置 <span class="arithmatex">\(j\)</span> 改变。于是：</p>
+<div class="arithmatex">\[
+W_{\uparrow,i}^{Q}R_tR_j^{\mathsf T}
+(W_{\uparrow,i}^{K})^{\mathsf T}
+\]</div>
+<p>不能预先合成一个供所有位置共用的固定 <span class="arithmatex">\(\overline W_i^Q\)</span>。即使当前 <span class="arithmatex">\(t\)</span> 固定，扫描不同历史 token 时 <span class="arithmatex">\(j\)</span> 仍然变化。一般也不能把旋转矩阵与任意上投影交换次序；矩阵可能是矩形，并没有这种交换保证。</p>
+<p>可以直接恢复每个历史 Key、做旋转后缓存，但这样就失去了只保存低维内容潜变量的主要优势。MLA 因此采用内容与位置解耦的路线，让内容分支继续使用矩阵吸收，而位置分支单独处理。<a href="https://arxiv.org/html/2405.04434v5#S2.SS1.SSS3">DeepSeek-V2 第 2.1.2–2.1.3 节</a></p>
+<h3 id="rope-576">解耦 RoPE：图中的 576 应怎样理解<a class="headerlink" href="#rope-576" title="Anchor link to this section for reference">¶</a></h3>
+<p>上面的推导暂时没有处理位置编码。如果直接对展开的内容 Key 使用 RoPE，位置相关的旋转会介入计算，妨碍前述简单的权重吸收。DeepSeek-V2 将内容与位置分支拆开，示意为：</p>
+<div class="arithmatex">\[
+k_{j,i}=[k_{j,i}^{C},k_j^{R}],
+\qquad
+q_{t,i}=[q_{t,i}^{C},q_{t,i}^{R}].
+\]</div>
+<p>这里 <span class="arithmatex">\(k_j^R\)</span> 已包含位置旋转，并在头之间共享；每个头有对应的 Query 位置分支。因此，完整注意力分数包含内容和位置两部分：</p>
+<div class="arithmatex">\[
+s_{t,j,i}
+=\frac{
+q_{t,i}^{C}(k_{j,i}^{C})^{\mathsf T}
++q_{t,i}^{R}(k_j^{R})^{\mathsf T}
+}{\sqrt{d_k+d_r}},
+\qquad
+a_{t,j,i}=\operatorname{Softmax}_j(s_{t,j,i}),
+\]</div>
+<p>其中 <span class="arithmatex">\(d_r\)</span> 为位置分支维度；具体模型可能因位置扩展配置而附加缩放。内容项可以按前文转换到潜空间，位置项则单独计算。</p>
+<p>于是每层、每 token 的核心缓存为：</p>
+<div class="arithmatex">\[
+\boxed{\text{缓存 }c_j^{KV}\text{ 与 }k_j^R,
+\qquad \text{元素数}=d_c+d_r.}
+\]</div>
+<p>以 DeepSeek-V2 官方配置为例：</p>
+<div class="arithmatex">\[
+d_c=512,\qquad d_r=64,\qquad d_c+d_r=576.
+\]</div>
+<p>因此，首张图中写的“<span class="arithmatex">\(d_c=576\)</span>”应理解为简化的总缓存口径。按照论文与官方配置的符号，<strong>潜变量维度是 512，576 是联合潜变量加位置 Key 的缓存维度</strong>，不能混为一谈。<a href="https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json">官方模型配置</a></p>
+<p>如果取图中比较使用的 MHA 维度 <span class="arithmatex">\(h=128\)</span>、<span class="arithmatex">\(d_k=d_v=128\)</span>，则其每层、每 token 的 KV Cache 为：</p>
+<div class="arithmatex">\[
+128\times128\times2=32768\text{ 个元素}.
+\]</div>
+<p>用相同缓存精度比较，<span class="arithmatex">\(32768/576\approx56.9\)</span>。这只是这组维度假设下的缓存容量比，不是固定的 MLA 压缩倍数，也不代表推理速度会提升同样倍数。若按 BF16 的 2 字节计，对应约 64 KiB 与 1.125 KiB；总缓存还要乘层数、上下文长度和 batch size，并考虑实现开销。</p>
+<h3 id="gqa-mla">从 GQA 到 MLA 的关键变化<a class="headerlink" href="#gqa-mla" title="Anchor link to this section for reference">¶</a></h3>
+<p>GQA 中共享的是具体的 K、V 头；MLA 中共享的是构造所有头的低维潜在表示。把固定的选择与复制改为可学习上投影，再联合压缩 K、V，就能从前一节的矩阵视角理解这一变化。低秩表示本身是一种结构约束，需要通过训练学习，不保证无损还原任意已有 MHA/GQA。</p>
+<h2 id="dsa">DSA<a class="headerlink" href="#dsa" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="_6">各种注意力机制的对比<a class="headerlink" href="#_6" title="Anchor link to this section for reference">¶</a></h2>
+<!-- 后续对比结构、KV Cache、计算与显存开销，以及适用场景。 -->
+
+<h2 id="_7">实践与实现记录<a class="headerlink" href="#_7" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="_8">总结<a class="headerlink" href="#_8" title="Anchor link to this section for reference">¶</a></h2>
+<h2 id="_9">参考资料<a class="headerlink" href="#_9" title="Anchor link to this section for reference">¶</a></h2>
+<!-- 配图放在 assets/attention-variants/ 下，使用相对路径引用。 -->
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="最后更新">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="2026年11月11日 14:01:54 UTC">2026年11月11日</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="创建日期">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="2026年11月11日 14:01:54 UTC">2026年11月11日</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+  
+
+
+
+      
+    </article>
+  </div>
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © JintaoXu
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tracking", "navigation.instant", "navigation.tabs", "navigation.indexes", "navigation.top", "content.action.edit", "content.action.view", "content.code.copy", "search.suggest", "search.highlight", "search.share", "toc.follow"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../js/extra.js"></script>
+      
+        <script src="../../js/tablesort.js"></script>
+      
+        <script src="../../js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
