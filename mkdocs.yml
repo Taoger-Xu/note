@@ -163,7 +163,9 @@ nav:
       - blog/index.md
   - Course:
       - course/index.md
-      - CS336: course/cs336/index.md
+      - CS336:
+          - course/cs336/index.md
+          - Parallelism: course/cs336/parallelism.md
       - CMU Agent: course/cmu-agent/index.md
       - CS329Z:
           - course/cs329z/index.md
