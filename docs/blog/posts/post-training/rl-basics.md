@@ -78,17 +78,15 @@ MDP 可以由一个五元组 $(S, A, P_{sa}, \gamma, R)$ 表示：
 
 ## 价值函数与贝尔曼方程
 
-RL 的目标是找 $\pi^* = \arg\max_\pi \mathbb{E}_{\tau\sim\pi}[G_0]$，但直接在所有策略里搜是不现实的。更自然的思路是迭代：先拿一个策略 $\pi$，评估它好不好（策略评估，policy evaluation），再根据评估结果改进它（策略提升，policy improvement），反复进行直到不能再改进为止。
+### 价值函数与最优策略
 
-### 策略评估：为什么需要价值函数
-
-$\mathbb{E}[G_0]$ 只是一个标量，它能告诉我们策略整体有多好，但不知道该在哪里改。要改进策略，需要知道每个状态下按 $\pi$ 走下去能拿到多少回报，这就是状态价值函数：
+前面把 RL 的目标写成最大化 $\mathbb{E}_{\tau\sim\pi}[G_0]$，这只是一个从初始状态出发的标量，没法衡量策略在各个状态下的好坏。因此在 MDP 中引入状态价值函数，表示从状态 $s$ 出发按策略 $\pi$ 行动的期望回报：
 
 $$
 V_\pi(s) = \mathbb{E}_\pi[G_t \mid S_t = s]
 $$
 
-只有 $V_\pi$ 还不够，因为改进策略要比较不同动作，所以再定义动作价值函数，表示在 $s$ 先执行 $a$、之后按 $\pi$ 行动的期望回报：
+为了进一步比较同一状态下不同动作的好坏，再定义动作价值函数，表示在 $s$ 先执行 $a$、之后按 $\pi$ 行动的期望回报：
 
 $$
 Q_\pi(s,a) = \mathbb{E}_\pi[G_t \mid S_t = s, A_t = a]
@@ -96,7 +94,17 @@ $$
 
 两者的关系是 $V_\pi(s) = \sum_a \pi(a\mid s)\,Q_\pi(s,a)$，即 $V$ 是 $Q$ 在策略下的平均。$A_\pi(s,a) = Q_\pi(s,a) - V_\pi(s)$ 称为优势函数（advantage），衡量动作 $a$ 比平均水平好多少，后面策略梯度会用到。
 
-### 策略提升：有了 Q 怎么改
+有了价值函数，就可以比较策略的优劣：若对所有状态 $s\in S$ 都有 $V_\pi(s) \ge V_{\pi'}(s)$，就称策略 $\pi$ 不差于 $\pi'$。在有限 MDP 中，一定存在至少一个策略不差于所有其他策略，这就是我们要找的最优策略 $\pi^*$。所有最优策略共享相同的最优状态价值函数和最优动作价值函数：
+
+$$
+V^*(s) = \max_\pi V_\pi(s), \qquad Q^*(s,a) = \max_\pi Q_\pi(s,a)
+$$
+
+一旦知道了 $Q^*$，每个状态直接取贪心动作就能得到最优策略：$\pi^*(s) = \arg\max_a Q^*(s,a)$。
+
+### 策略评估与策略提升
+
+目标明确了是找 $\pi^*$，但直接在所有策略里穷举 $\max_\pi$ 是不现实的。更自然的思路是迭代：先拿一个策略 $\pi$，算出它的价值（策略评估，policy evaluation），再根据评估结果改进它（策略提升，policy improvement），反复交替直到收敛。
 
 有了 $Q_\pi$，改进的方式很直接：每个状态都选当前看来最好的动作
 
@@ -131,7 +139,7 @@ $$
 
 ### 贝尔曼最优方程
 
-评估和提升不断交替，最终收敛到最优策略 $\pi^*$，对应最优价值 $V^*(s) = \max_\pi V_\pi(s)$、$Q^*(s,a) = \max_\pi Q_\pi(s,a)$。此时策略已经是贪心的，期望方程中对 $\pi$ 的平均变成取 max：
+当策略收敛到最优策略 $\pi^*$ 时，策略本身已经是贪心的，期望方程中对 $\pi$ 的平均直接变成取 max：
 
 $$
 V^*(s) = \max_a \Big[R(s,a) + \gamma \sum_{s'} P_{sa}(s')\,V^*(s')\Big]
@@ -141,11 +149,13 @@ $$
 Q^*(s,a) = R(s,a) + \gamma \sum_{s'} P_{sa}(s') \max_{a'} Q^*(s',a')
 $$
 
-知道 $Q^*$ 后，最优策略就是 $\pi^*(s) = \arg\max_a Q^*(s,a)$。因为有 max，这个方程是非线性的，没有闭式解，只能迭代求解。在 $P_{sa}$ 和 $R$ 已知时，可以用下一节的动态规划求解。
+因为有 max，这个方程是非线性的，没有闭式解，只能迭代求解。在 $P_{sa}$ 和 $R$ 已知时，可以用下一节的动态规划求解。
 
 ## 动态规划：策略迭代与价值迭代
 
-当 $P_{sa}$ 和 $R$ 都已知时（model-based），贝尔曼方程中的每一项都能直接算，不需要和环境交互。动态规划（Dynamic Programming, DP）的做法就是把贝尔曼方程当成更新式，反复迭代直到收敛。
+回到前面留下的问题：怎么算出 $V_\pi$。当当前策略 $\pi$ 已知，并且环境模型 $P_{sa}$ 和 $R$ 也已知（model-based）时，贝尔曼期望方程里的所有系数都是已知的，不需要和环境交互。虽然可以直接当线性方程组解，但矩阵求逆代价太高（$O(|S|^3)$），动态规划（Dynamic Programming, DP）的做法是直接把贝尔曼方程当成更新式，从任意初值出发反复迭代直到收敛出 $V_\pi$。
+
+在此基础上结合策略提升，就得到两种求解最优策略的方法。
 
 ### 策略迭代
 
@@ -225,7 +235,70 @@ $$
 
 ## 策略梯度
 
-<!-- 策略梯度定理、REINFORCE、baseline 与方差缩减、重要性采样。 -->
+前面的方法都属于 value-based：先学 $Q(s,a)$，再通过 $\arg\max_a Q(s,a)$ 间接取策略。当动作空间连续或很大（如 LLM 的词表）时 $\max_a$ 很难算，而且 $Q$ 的微小误差就可能让贪心动作突变。
+
+策略梯度（Policy Gradient）直接用参数 $\theta$ 把策略建模为 $\pi_\theta(a\mid s)$，记轨迹累积奖励为 $G(\tau) = \sum_{t=0}^{T-1} R(s_t, a_t)$，通过“采样轨迹 → 估计回报 → 梯度上升更新 $\theta$”的循环直接最大化 $J(\theta) = \mathbb{E}_{\tau \sim p_\theta(\tau)}[G(\tau)]$（代码中等价于对 $-J(\theta)$ 做梯度下降）：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-objective.svg"
+<figcaption>直接对策略参数建模：采样轨迹估计 J(θ)，沿梯度方向更新 θ。</figcaption>
+</figure>
+
+### 直接对策略求导
+
+更新参数需要算 $\nabla_\theta J(\theta)$。直接对积分里的分布求导得到 $\int \nabla_\theta p_\theta(\tau)\,G(\tau)\,d\tau$，它不再是期望形式，没法靠采样估计。利用对数导数恒等式 $\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)$ 替换后，就能把梯度重新拉回关于 $\tau \sim p_\theta(\tau)$ 的期望：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-log-trick.svg"
+<figcaption>利用对数导数恒等式（蓝线换橙线），把对分布的导数变回轨迹期望。</figcaption>
+</figure>
+
+再对轨迹概率 $p_\theta(\tau)$ 两侧取 $\log$，概率连乘变成求和。求 $\nabla_\theta$ 时，与 $\theta$ 无关的初始状态分布 $\log p(s_0)$ 和未知的环境转移概率 $\log P(s_{t+1}\mid s_t,a_t)$ 导数直接为 $0$，只留下策略自己的 $\sum_t \nabla_\theta \log \pi_\theta(a_t\mid s_t)$：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-derivation.svg"
+<figcaption>取对数后与 θ 无关的初始分布和转移概率求导归零，消去未知的环境模型。</figcaption>
+</figure>
+
+这样无需环境模型，按当前 $\pi_\theta$ 采出 $N$ 条轨迹做样本平均就能更新一次 $\theta$。直观上这就是加权最大似然：$G(\tau)$ 高就推高整条轨迹上动作的对数概率，反之压低。
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-sample-update.svg"
+<figcaption>朴素策略梯度的采样与参数更新：每批轨迹更新一次参数后即作废。</figcaption>
+</figure>
+
+这个 $\log \pi_\theta$ 形式天然适合自回归 LLM：把上下文 $(x, y_{<t})$ 看作 $s_t$、第 $t$ 个 token $y_t$ 看作 $a_t$，序列对数概率本来就是 $\sum_t \log \pi_\theta(a_t\mid s_t)$，既避开了长序列概率连乘的浮点下溢，又能直接对输出 logits 做 `log_softmax`，训练目标本质就是带回报权重的交叉熵 loss。
+
+### 为什么朴素 PG 方差大，以及如何降方差
+
+上面朴素 PG 估计出来的梯度虽然无偏，但方差极大（high variance），原因有三点：
+
+1. 多步随机性累加：一条轨迹上每步动作采样和环境转移都有随机性，$T$ 步累加进同一个标量 $G(\tau)$，即使同一起点做同一动作，后续轨迹不同也会让 $G(\tau)$ 剧烈波动，而受交互开销限制每次采样的轨迹数 $N$ 往往很小；
+2. 信用分配粗糙：用整条轨迹的总回报 $G(\tau)$ 给每一步动作打分，$t$ 时刻的动作把 $t$ 之前无关动作拿到的奖励也算在了自己头上；
+3. 缺少基准（baseline）：梯度直接乘在 $G(\tau)$ 的绝对数值上，若奖励整体偏正（例如给所有奖励加一个正数），最优策略不变，但梯度乘子的波动会被大幅放大。
+
+高方差会直接拖垮训练：一方面信号被噪声淹没——比如回报恒为正时，采到的差动作乘上正的 $G(\tau)$ 概率依然被推高，而好动作只要后续几步运气差拿到低分就会被错误打压；另一方面梯度方向剧烈抖动，学习率稍大，一次坏样本就会把策略推崩，变差的策略又采出更差的数据形成恶性循环，学习率调小则收敛极慢、样本效率极低。
+
+针对后两个根源，有两个不引入偏差的降方差手段：
+
+- 利用因果性（reward-to-go）：动作 $a_t$ 影响不了过去，去掉 $t$ 之前的奖励，只保留从 $t$ 开始的回报 $G_t$ 来加权（用采样轨迹代入更新就是 REINFORCE）；
+- 减去状态基线 $b(s_t)$：由于 $\mathbb{E}_{a_t\sim\pi_\theta}[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)] = 0$，减去只依赖状态的函数不改变梯度期望。取 $b(s_t) = V_{\pi_\theta}(s_t)$，权重在期望下正好变成优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
+
+$$
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta(\tau)}\!\left[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A_{\pi_\theta}(s_t, a_t)\right]
+$$
+
+这样高于平均水平（$A > 0$）的动作涨概率，低于平均水平（$A < 0$）的动作降概率。
+
+### 重要性采样与 Off-Policy 修正
+
+上图左下角的“仅使用一次”暴露了另一个痛点：期望要求数据来自当前的 $\pi_\theta$（on-policy），$\theta$ 更新一步后旧数据分布就失效了。想复用旧策略 $\pi_{\theta_{\text{old}}}$ 采出的数据多次更新 $\pi_\theta$，在两者足够接近时可做单步重要性采样修正，得到代理目标（surrogate objective）：
+
+$$
+J^{\text{IS}}(\theta) = \mathbb{E}_{(s_t, a_t) \sim \pi_{\theta_{\text{old}}}}\!\left[\frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}\, A_{\pi_{\theta_{\text{old}}}}(s_t, a_t)\right]
+$$
+
+到这里就留下两个问题交给后面两节：一是怎么低方差地估出优势函数 $A$（Actor-Critic）；二是怎么保证 $\pi_\theta$ 不偏离 $\pi_{\theta_{\text{old}}}$ 太远，防止重要性权重爆炸导致策略崩溃（TRPO 与 PPO）。
 
 ## Actor-Critic
 

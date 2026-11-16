@@ -1,0 +1,43 @@
+<svg class="rl-roadmap" viewBox="0 0 780 336" role="img" aria-label="强化学习策略优化闭环：目标函数最大化期望累积奖励，通过采样轨迹、估计回报、梯度上升改进策略三步循环更新参数 θ。">
+<defs><marker id="pg-obj-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="12" y="10" width="756" height="316" rx="14"/>
+<text class="rl-math" x="30" y="60" text-anchor="start"><tspan font-style="italic">θ</tspan>* = arg max</text>
+<text class="rl-math-sm" x="108" y="74" text-anchor="middle" font-style="italic">θ</text>
+<text class="rl-math" x="134" y="60" text-anchor="start">𝔼</text>
+<text class="rl-math-sm" x="148" y="67" text-anchor="start"><tspan font-style="italic">τ</tspan>~<tspan font-style="italic">p</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.8" d="M 207.5 34.0 H 202.0 V 82.0 H 207.5"/>
+<text class="rl-math-op" x="222.0" y="62.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="222.0" y="77.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="222.0" y="40.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="240" y="60" text-anchor="start"><tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.8" d="M 304.5 34.0 H 310.0 V 82.0 H 304.5"/>
+<text class="rl-math" x="418" y="60" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5">0</tspan><tspan dy="-4">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="10.5">0</tspan><tspan dy="-4">​</tspan>, …, <tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5" font-style="italic">T</tspan><tspan dy="-4">​</tspan>)</text>
+<path class="rl-brace" d="M 354.0 70.0 Q 354.0 74.0 360.0 74.0 H 412.0 Q 418.0 74.0 418.0 78.0 Q 418.0 74.0 424.0 74.0 H 476.0 Q 482.0 74.0 482.0 70.0"/>
+<text class="rl-math-sm" x="418" y="94" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<text class="rl-math" x="492" y="60" text-anchor="start">= <tspan font-style="italic">p</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5">0</tspan><tspan dy="-4">​</tspan>)</text>
+<text class="rl-math-op" x="560.0" y="62.0" text-anchor="middle">∏</text>
+<text class="rl-math-sm" x="560.0" y="77.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="560.0" y="40.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="578" y="60" text-anchor="start"><tspan font-style="italic">π</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>|<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>) <tspan font-style="italic">P</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5">t+1</tspan><tspan dy="-4">​</tspan>|<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>)</text>
+<path class="rl-deep" d="M 32 116 H 748"/>
+<path class="rl-edge" d="M 124 194 V 178 Q 124 166 136 166 H 242" marker-end="url(#pg-obj-arrow)"/>
+<path class="rl-edge" d="M 328 196 V 242" marker-end="url(#pg-obj-arrow)"/>
+<path class="rl-edge" d="M 244 274 H 136 Q 124 274 124 262 V 256" marker-end="url(#pg-obj-arrow)"/>
+<g class="rl-node rl-policy"><rect x="40" y="194" width="168" height="60" rx="10"/><text class="rl-title" x="124" y="220" text-anchor="middle">采样轨迹</text><text class="rl-sub" x="124" y="241" text-anchor="middle">运行策略 <tspan font-style="italic">π</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan> 交互</text></g>
+<g class="rl-node rl-green"><rect x="244" y="136" width="168" height="60" rx="10"/><text class="rl-title" x="328" y="162" text-anchor="middle">估计回报</text><text class="rl-sub" x="328" y="183" text-anchor="middle">计算轨迹累积奖励</text></g>
+<g class="rl-node rl-value"><rect x="244" y="244" width="168" height="60" rx="10"/><text class="rl-title" x="328" y="270" text-anchor="middle">改进策略</text><text class="rl-sub" x="328" y="291" text-anchor="middle">沿梯度方向更新 <tspan font-style="italic">θ</tspan></text></g>
+<text class="rl-math" x="432" y="170" text-anchor="start"><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) = 𝔼</text>
+<text class="rl-math-sm" x="494" y="177" text-anchor="start"><tspan font-style="italic">π</tspan><tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan></text>
+<text class="rl-math" x="512" y="170" text-anchor="start">[<tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>)] ≈</text>
+<text class="rl-math-sm" x="582" y="159" text-anchor="middle">1</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 572 165 H 592"/>
+<text class="rl-math-sm" x="582" y="180" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="610.0" y="172.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="610.0" y="187.0" text-anchor="middle"><tspan font-style="italic">i</tspan>=1</text>
+<text class="rl-math-sm" x="610.0" y="150.0" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="642.0" y="172.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="642.0" y="187.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="642.0" y="150.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="660" y="170" text-anchor="start"><tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan><tspan dy="-5.5" font-size="10">(i)</tspan><tspan dy="5.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="10.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan><tspan dy="-5.5" font-size="10">(i)</tspan><tspan dy="5.5">​</tspan>)</text>
+<text class="rl-math" x="432" y="279" text-anchor="start"><tspan font-style="italic">θ</tspan> ← <tspan font-style="italic">θ</tspan> + <tspan font-style="italic">α</tspan> ∇<tspan dy="4" font-size="10.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>)</text>
+</svg>

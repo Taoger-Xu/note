@@ -40,12 +40,14 @@
 @media (max-width: 760px) { .topic-archive { grid-template-columns: 1fr; } .topic-map-scroll { padding: 4px; } }
 .rl-roadmap-figure { overflow-x: auto; margin: 1.5em auto; max-width: 720px; }
 .md-typeset .rl-roadmap-figure figcaption { max-width: none; font-size: .75rem; font-style: normal; color: var(--md-default-fg-color--light); }
-.rl-roadmap { display: block; width: 100%; min-width: 560px; height: auto; color: var(--md-default-fg-color); --rl-value: #2f6fd6; --rl-policy: #c06a00; }
-[data-md-color-scheme="slate"] .rl-roadmap { --rl-value: #8bb4fa; --rl-policy: #e8b05d; }
+.rl-roadmap { display: block; width: 100%; min-width: 560px; height: auto; color: var(--md-default-fg-color); --rl-value: #2f6fd6; --rl-policy: #c06a00; --rl-green: #1f8a5b; --rl-red: #cf3636; }
+[data-md-color-scheme="slate"] .rl-roadmap { --rl-value: #8bb4fa; --rl-policy: #e8b05d; --rl-green: #70c590; --rl-red: #f28b82; }
 .rl-band { fill: currentColor; fill-opacity: .035; }
 .rl-lane-label { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
 .rl-lane-label.rl-value { fill: var(--rl-value); }
 .rl-lane-label.rl-policy { fill: var(--rl-policy); }
+.rl-lane-label.rl-green { fill: var(--rl-green); }
+.rl-lane-label.rl-red { fill: var(--rl-red); }
 .rl-deep { fill: none; stroke: currentColor; stroke-opacity: .35; stroke-dasharray: 5 5; }
 .rl-deep-label { fill: currentColor; fill-opacity: .6; font-size: 13px; }
 .rl-edge { fill: none; stroke: currentColor; stroke-opacity: .55; stroke-width: 1.4; }
@@ -55,5 +57,15 @@
 .rl-node rect { fill: var(--md-default-bg-color); stroke: var(--rl-accent); stroke-width: 1.6; }
 .rl-node.rl-value { --rl-accent: var(--rl-value); }
 .rl-node.rl-policy { --rl-accent: var(--rl-policy); }
+.rl-node.rl-green { --rl-accent: var(--rl-green); }
 .rl-title { fill: currentColor; font-size: 16px; font-weight: 700; }
 .rl-sub { fill: currentColor; fill-opacity: .68; font-size: 13px; }
+.rl-math { font-family: "Cambria Math", "STIX Two Math", Georgia, "Times New Roman", serif; font-size: 14.5px; fill: currentColor; }
+.rl-math-sm { font-family: "Cambria Math", "STIX Two Math", Georgia, "Times New Roman", serif; font-size: 11px; fill: currentColor; }
+.rl-math-op { font-family: "Cambria Math", "STIX Two Math", Georgia, "Times New Roman", serif; font-size: 21px; fill: currentColor; }
+.rl-callout { fill: var(--rl-value); fill-opacity: .07; stroke: var(--rl-value); stroke-opacity: .45; stroke-width: 1.3; }
+.rl-ul-blue { stroke: var(--rl-value); stroke-width: 2.2; fill: none; }
+.rl-ul-amber { stroke: var(--rl-policy); stroke-width: 2.2; fill: none; }
+.rl-ul-green { stroke: var(--rl-green); stroke-width: 2.2; fill: none; }
+.rl-strike { stroke: var(--rl-red); stroke-width: 2.1; stroke-linecap: round; fill: none; }
+.rl-brace { stroke: currentColor; stroke-opacity: .55; stroke-width: 1.25; fill: none; }
