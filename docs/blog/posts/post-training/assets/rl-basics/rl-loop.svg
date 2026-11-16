@@ -1,0 +1,17 @@
+<svg class="rl-roadmap" viewBox="0 0 680 280" role="img" aria-label="强化学习智能体与环境交互闭环：智能体在时刻 t 接收状态 S_t 与奖励 R_t，依据策略输出动作 A_t；环境接收动作后发生状态转移并反馈下一状态 S_{t+1} 与即时奖励 R_{t+1}。">
+<defs><marker id="rl-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="16" y="12" width="648" height="256" rx="14"/>
+<path class="rl-edge" d="M 460 60 H 536 Q 548 60 548 72 V 208 Q 548 220 536 220 H 462" marker-end="url(#rl-loop-arrow)"/>
+<text class="rl-lane-label rl-policy" x="562" y="135" text-anchor="start">动作 <tspan font-style="italic">A</tspan><tspan dy="3" font-size="10">t</tspan></text>
+<text class="rl-edge-label" x="562" y="156" text-anchor="start">作用于环境</text>
+<path class="rl-edge" d="M 240 230 H 126 Q 114 230 114 218 V 62 Q 114 50 126 50 H 238" marker-end="url(#rl-loop-arrow)"/>
+<path class="rl-edge" d="M 240 208 H 184 Q 172 208 172 196 V 84 Q 172 72 184 72 H 238" marker-end="url(#rl-loop-arrow)"/>
+<path class="rl-deep" d="M 94 140 H 268"/>
+<text class="rl-deep-label" x="278" y="144" text-anchor="start">时间步推进 t → t+1</text>
+<text class="rl-edge-label" x="102" y="116" text-anchor="end">当前状态 <tspan font-style="italic">S</tspan><tspan dy="3" font-size="10">t</tspan></text>
+<text class="rl-lane-label rl-value" x="102" y="172" text-anchor="end">下一状态 <tspan font-style="italic">S</tspan><tspan dy="3" font-size="10">t+1</tspan></text>
+<text class="rl-edge-label" x="184" y="116" text-anchor="start">奖励 <tspan font-style="italic">R</tspan><tspan dy="3" font-size="10">t</tspan></text>
+<text class="rl-lane-label rl-value" x="184" y="172" text-anchor="start">即时奖励 <tspan font-style="italic">R</tspan><tspan dy="3" font-size="10">t+1</tspan></text>
+<g class="rl-node rl-policy"><rect x="240" y="28" width="220" height="64" rx="10"/><text class="rl-title" x="350" y="56" text-anchor="middle">智能体 · Agent</text><text class="rl-sub" x="350" y="77" text-anchor="middle">依据策略 π(a | s) 选择动作</text></g>
+<g class="rl-node rl-value"><rect x="240" y="188" width="220" height="64" rx="10"/><text class="rl-title" x="350" y="216" text-anchor="middle">环境 · Environment</text><text class="rl-sub" x="350" y="237" text-anchor="middle">状态转移 <tspan font-style="italic">P</tspan><tspan dy="3" font-size="10">sa</tspan><tspan dy="-3"> · 奖励函数 </tspan><tspan font-style="italic">R</tspan></text></g>
+</svg>
