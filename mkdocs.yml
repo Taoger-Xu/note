@@ -169,6 +169,21 @@ nav:
               - Parallelism: course/cs336/lecture/parallelism.md
           - Lab:
               - Parallelism: course/cs336/lab/parallelism.md
+      - CS285:
+          - course/cs285/index.md
+          - Lecture:
+              - Imitation Learning & Flow Policies: course/cs285/lecture/imitation-learning.md
+              - Policy Gradients & Actor-Critic: course/cs285/lecture/policy-gradients.md
+              - Value-Based RL & Q-Learning: course/cs285/lecture/value-functions.md
+              - Control as Inference & LLM RL: course/cs285/lecture/vi-and-llm-rl.md
+              - Model-Based RL: course/cs285/lecture/model-based-rl.md
+              - Offline RL & Exploration: course/cs285/lecture/offline-rl-exploration.md
+          - Lab:
+              - HW1 · Imitation Learning: course/cs285/lab/hw1-imitation-learning.md
+              - HW2 · Policy Gradients: course/cs285/lab/hw2-policy-gradients.md
+              - HW3 · Q-Learning & Actor-Critic: course/cs285/lab/hw3-dqn-sac.md
+              - HW4 · LLM RL: course/cs285/lab/hw4-llm-rl.md
+              - HW5 · Offline RL: course/cs285/lab/hw5-offline-rl.md
       - CMU Agent: course/cmu-agent/index.md
       - CS329Z:
           - course/cs329z/index.md
