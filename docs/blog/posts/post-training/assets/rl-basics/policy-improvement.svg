@@ -1,0 +1,34 @@
+<svg class="rl-roadmap" viewBox="0 0 720 392" role="img" aria-label="价值评估指导策略提升：先评估当前策略 π 的价值 V_π，再贪心选择使 Q_π(s, π′(s)) ≥ V_π(s) 的新策略 π′，交替迭代收敛至最优 V* 与 π*。">
+<defs><marker id="pi-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="16" y="14" width="688" height="364" rx="14"/>
+<path class="rl-edge" d="M 176 64 H 208" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 398 64 H 430" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 560 96 V 130 Q 560 142 548 142 H 116 Q 104 142 104 130 V 98" marker-end="url(#pi-arrow)"/>
+<text class="rl-edge-label" x="332" y="133" text-anchor="middle">用新策略 π′ 替换 π，进入下一轮迭代</text>
+<g class="rl-node rl-policy"><rect x="32" y="32" width="144" height="64" rx="10"/><text class="rl-title" x="104" y="60" text-anchor="middle">当前策略 π</text><text class="rl-sub" x="104" y="81" text-anchor="middle">给定决策规则</text></g>
+<g class="rl-node rl-value"><rect x="210" y="32" width="188" height="64" rx="10"/><text class="rl-title" x="304" y="60" text-anchor="middle">评估策略价值</text><text class="rl-sub" x="304" y="81" text-anchor="middle">求解 <tspan font-style="italic">V</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>), <tspan font-style="italic">Q</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>, <tspan font-style="italic">a</tspan>)</text></g>
+<g class="rl-node rl-green"><rect x="432" y="32" width="256" height="64" rx="10"/><text class="rl-title" x="560" y="60" text-anchor="middle">寻找更优策略 π′</text><text class="rl-sub" x="560" y="81" text-anchor="middle">使 <tspan font-style="italic">Q</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>, π′(<tspan font-style="italic">s</tspan>)) ≥ <tspan font-style="italic">V</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>)</text></g>
+<path class="rl-deep" d="M 32 168 H 688"/>
+<path class="rl-ul-blue" stroke-width="1.8" d="M 86 202 L 326 278"/>
+<path class="rl-ul-amber" stroke-width="1.8" d="M 104 352 L 326 278"/>
+<text class="rl-lane-label rl-value" x="220" y="226" text-anchor="middle"><tspan font-style="italic">V</tspan> = <tspan font-style="italic">V</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-lane-label rl-policy" x="234" y="346" text-anchor="middle">π = greedy(<tspan font-style="italic">Q</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>)</text>
+<path class="rl-edge" d="M 92 304 L 122 216" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 124 215 L 158 331" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 160 331 L 194 239" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 196 239 L 224 310" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 226 310 L 254 258" marker-end="url(#pi-arrow)"/>
+<path class="rl-edge" d="M 256 258 L 278 292" marker-end="url(#pi-arrow)"/>
+<circle cx="92" cy="304" r="4" fill="currentColor" fill-opacity="0.7"/>
+<text class="rl-sub" x="68" y="324" text-anchor="middle">初始 V, π</text>
+<circle cx="326" cy="278" r="5" fill="var(--rl-green)"/>
+<text class="rl-title" x="354" y="284" text-anchor="start"><tspan font-style="italic">V</tspan>*, π*</text>
+<g class="rl-node rl-policy"><rect x="418" y="250" width="64" height="52" rx="26"/><text class="rl-title" x="450" y="282" text-anchor="middle">π</text></g>
+<g class="rl-node rl-value"><rect x="614" y="250" width="64" height="52" rx="26"/><text class="rl-title" x="646" y="282" text-anchor="middle"><tspan font-style="italic">V</tspan></text></g>
+<path class="rl-edge" d="M 476 252 C 516 208, 580 208, 618 250" marker-end="url(#pi-arrow)"/>
+<text class="rl-lane-label rl-value" x="548" y="208" text-anchor="middle">策略评估 · Evaluation</text>
+<text class="rl-sub" x="548" y="242" text-anchor="middle"><tspan font-style="italic">V</tspan> → <tspan font-style="italic">V</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan></text>
+<path class="rl-edge" d="M 620 300 C 580 344, 516 344, 478 302" marker-end="url(#pi-arrow)"/>
+<text class="rl-sub" x="548" y="316" text-anchor="middle">π → greedy(<tspan font-style="italic">Q</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>)</text>
+<text class="rl-lane-label rl-policy" x="548" y="356" text-anchor="middle">策略提升 · Improvement</text>
+</svg>

@@ -114,7 +114,10 @@ $$
 
 策略提升定理保证这样做不会变差：若对所有 $s$ 有 $Q_\pi(s,\pi'(s)) \ge V_\pi(s)$，则 $V_{\pi'}(s) \ge V_\pi(s)$。贪心策略显然满足条件，因为 $\max_a Q_\pi(s,a)$ 不小于按 $\pi$ 的平均 $V_\pi(s)$。
 
-![价值评估指导策略提升](assets/rl-basics/policy-improvement.png)
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/policy-improvement.svg"
+<figcaption>价值评估指导策略提升：交替做策略评估与贪心策略提升，逐步收敛至最优的 V* 和 π*。</figcaption>
+</figure>
 
 不断交替进行价值评估与贪心策略提升，最终就能逼近最优的 $V^*$ 和 $\pi^*$。所以现在的问题归结为：如何求解出 $V_\pi$ 和 $Q_\pi$，有了它们就可以直接用来决策。
 

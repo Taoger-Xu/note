@@ -1,38 +1,40 @@
-<svg class="rl-roadmap" viewBox="0 0 680 310" role="img" aria-label="贝尔曼期望方程的 backup 图：左图 V_π(s) 先按策略 π 对动作 a 求平均，再按转移概率对下一状态 s' 求平均；右图 Q_π(s,a) 先按转移概率对 s' 求平均，再按策略 π 对动作 a' 求平均。空心圆表示状态，实心点表示动作。">
-<rect class="rl-band" x="16" y="12" width="308" height="286" rx="14"/>
-<rect class="rl-band" x="356" y="12" width="308" height="286" rx="14"/>
+<svg class="rl-roadmap" viewBox="0 0 720 336" role="img" aria-label="贝尔曼期望方程的 backup 图：左图 V_π(s) 先按策略 π 对动作 a 求平均，再按转移概率对下一状态 s′ 求平均；右图 Q_π(s,a) 先按转移概率对 s′ 求平均，再按策略 π 对动作 a′ 求平均。">
+<rect class="rl-band" x="16" y="14" width="330" height="308" rx="14"/>
+<rect class="rl-band" x="374" y="14" width="330" height="308" rx="14"/>
 <g class="rl-edge">
-<path d="M170 66 L110 134"/><path d="M170 66 L230 134"/>
-<path d="M110 146 L80 224"/><path d="M110 146 L140 224"/>
-<path d="M230 146 L200 224"/><path d="M230 146 L260 224"/>
-<path d="M510 56 L450 124"/><path d="M510 56 L570 124"/>
-<path d="M450 156 L420 234"/><path d="M450 156 L480 234"/>
-<path d="M570 156 L540 234"/><path d="M570 156 L600 234"/>
+<path d="M 181 74 L 116 144"/><path d="M 181 74 L 246 144"/>
+<path d="M 116 158 L 80 236"/><path d="M 116 158 L 152 236"/>
+<path d="M 246 158 L 210 236"/><path d="M 246 158 L 282 236"/>
+<path d="M 539 62 L 474 134"/><path d="M 539 62 L 604 134"/>
+<path d="M 474 174 L 438 248"/><path d="M 474 174 L 510 248"/>
+<path d="M 604 174 L 568 248"/><path d="M 604 174 L 640 248"/>
 </g>
-<text class="rl-edge-label" x="236" y="100" text-anchor="start">π(a | s)</text>
-<text class="rl-edge-label" x="266" y="194" text-anchor="start">R, P<tspan dy="3" font-size="10">sa</tspan><tspan dy="-3">(s′)</tspan></text>
-<text class="rl-edge-label" x="576" y="96" text-anchor="start">R, P<tspan dy="3" font-size="10">sa</tspan><tspan dy="-3">(s′)</tspan></text>
-<text class="rl-edge-label" x="604" y="200" text-anchor="start">π(a′ | s′)</text>
-<g fill="var(--md-default-bg-color)" stroke="var(--rl-value)" stroke-width="1.6">
-<circle cx="170" cy="50" r="16"/>
-<circle cx="80" cy="240" r="16"/><circle cx="140" cy="240" r="16"/>
-<circle cx="200" cy="240" r="16"/><circle cx="260" cy="240" r="16"/>
-<circle cx="450" cy="140" r="16"/><circle cx="570" cy="140" r="16"/>
+<text class="rl-edge-label" x="226" y="106" text-anchor="start"><tspan font-style="italic">π</tspan>(<tspan font-style="italic">a</tspan> | <tspan font-style="italic">s</tspan>)</text>
+<text class="rl-edge-label" x="272" y="200" text-anchor="start"><tspan font-style="italic">R</tspan>, <tspan font-style="italic">P</tspan><tspan dy="4.5" font-size="13">sa</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-edge-label" x="586" y="98" text-anchor="start"><tspan font-style="italic">R</tspan>, <tspan font-style="italic">P</tspan><tspan dy="4.5" font-size="13">sa</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-edge-label" x="626" y="212" text-anchor="start"><tspan font-style="italic">π</tspan>(<tspan font-style="italic">a</tspan>′ | <tspan font-style="italic">s</tspan>′)</text>
+<g fill="var(--md-default-bg-color)" stroke="var(--rl-value)" stroke-width="1.8">
+<circle cx="181" cy="54" r="20"/>
+<circle cx="80" cy="254" r="19"/><circle cx="152" cy="254" r="19"/>
+<circle cx="210" cy="254" r="19"/><circle cx="282" cy="254" r="19"/>
+<circle cx="474" cy="154" r="20"/><circle cx="604" cy="154" r="20"/>
 </g>
 <g fill="var(--rl-policy)">
-<circle cx="110" cy="140" r="6"/><circle cx="230" cy="140" r="6"/>
-<circle cx="510" cy="50" r="6"/>
-<circle cx="420" cy="240" r="6"/><circle cx="480" cy="240" r="6"/>
-<circle cx="540" cy="240" r="6"/><circle cx="600" cy="240" r="6"/>
+<circle cx="116" cy="151" r="7"/><circle cx="246" cy="151" r="7"/>
+<circle cx="539" cy="54" r="7"/>
+<circle cx="438" cy="254" r="7"/><circle cx="510" cy="254" r="7"/>
+<circle cx="568" cy="254" r="7"/><circle cx="640" cy="254" r="7"/>
 </g>
-<g class="rl-sub" text-anchor="middle">
-<text x="170" y="55">s</text>
-<text x="80" y="245">s′</text><text x="140" y="245">s′</text><text x="200" y="245">s′</text><text x="260" y="245">s′</text>
-<text x="88" y="144">a</text>
-<text x="450" y="145">s′</text><text x="570" y="145">s′</text>
-<text x="486" y="55">s, a</text>
-<text x="420" y="262">a′</text><text x="480" y="262">a′</text><text x="540" y="262">a′</text><text x="600" y="262">a′</text>
+<g class="rl-math" text-anchor="middle">
+<text x="181" y="60"><tspan font-style="italic">s</tspan></text>
+<text x="80" y="260"><tspan font-style="italic">s</tspan>′</text><text x="152" y="260"><tspan font-style="italic">s</tspan>′</text>
+<text x="210" y="260"><tspan font-style="italic">s</tspan>′</text><text x="282" y="260"><tspan font-style="italic">s</tspan>′</text>
+<text x="92" y="156"><tspan font-style="italic">a</tspan></text>
+<text x="474" y="160"><tspan font-style="italic">s</tspan>′</text><text x="604" y="160"><tspan font-style="italic">s</tspan>′</text>
+<text x="502" y="60"><tspan font-style="italic">s</tspan>, <tspan font-style="italic">a</tspan></text>
+<text x="438" y="279"><tspan font-style="italic">a</tspan>′</text><text x="510" y="279"><tspan font-style="italic">a</tspan>′</text>
+<text x="568" y="279"><tspan font-style="italic">a</tspan>′</text><text x="640" y="279"><tspan font-style="italic">a</tspan>′</text>
 </g>
-<text class="rl-title" x="170" y="286" text-anchor="middle">V<tspan dy="4" font-size="11">π</tspan><tspan dy="-4">(s)</tspan></text>
-<text class="rl-title" x="510" y="286" text-anchor="middle">Q<tspan dy="4" font-size="11">π</tspan><tspan dy="-4">(s, a)</tspan></text>
+<text class="rl-title" x="181" y="306" text-anchor="middle"><tspan font-style="italic">V</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>)</text>
+<text class="rl-title" x="539" y="306" text-anchor="middle"><tspan font-style="italic">Q</tspan><tspan dy="4.5" font-size="13">π</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan>, <tspan font-style="italic">a</tspan>)</text>
 </svg>
