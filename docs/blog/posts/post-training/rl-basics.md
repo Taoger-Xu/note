@@ -238,70 +238,63 @@ $$
 
 ## 策略梯度
 
-前面的方法都属于 value-based：先学 $Q(s,a)$，再通过 $\arg\max_a Q(s,a)$ 间接取策略。当动作空间连续或很大（如 LLM 的词表）时 $\max_a$ 很难算，而且 $Q$ 的微小误差就可能让贪心动作突变。
+前面介绍的 Q-learning、DQN 等 Value-based 方法，核心思想都是通过学习动作价值函数 $Q(s,a)$ 再取 $\arg\max_a Q(s,a)$ 间接导出策略。这类方法在面对连续动作空间或超大离散动作空间（如 LLM 的词表）时难以高效求解 $\max_a$，同时 $Q$ 值的微小估计误差就可能导致贪心动作发生突变，也无法表达本身就需要随机化的策略。为了解决这些问题并扩展适用范围，研究主要沿两条主线推进：一方面对基于值的方法继续改进（如缓解高估偏差的 Double DQN、改进网络结构的 Dueling Network、Prioritized Replay 等）；另一方面则将视野转向 Policy-based，即直接对策略参数化并通过 Gradient Ascent 最大化期望回报。
 
-策略梯度（Policy Gradient）直接用参数 $\theta$ 把策略建模为 $\pi_\theta(a\mid s)$，记轨迹累积奖励为 $G(\tau) = \sum_{t=0}^{T-1} R(s_t, a_t)$，通过“采样轨迹 → 估计回报 → 梯度上升更新 $\theta$”的循环直接最大化 $J(\theta) = \mathbb{E}_{\tau \sim p_\theta(\tau)}[G(\tau)]$（代码中等价于对 $-J(\theta)$ 做梯度下降）：
+### 参数化策略与梯度推导
 
-<figure class="rl-roadmap-figure">
---8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-objective.svg"
-<figcaption>直接对策略参数建模：采样轨迹估计 J(θ)，沿梯度方向更新 θ。</figcaption>
-</figure>
+与 Value-based 方法不同，策略梯度（Policy Gradient）直接学习一个从状态到动作概率分布的参数化映射 $\pi_\theta(a \mid s)$。记一条轨迹 $\tau = (s_0, a_0, \dots, s_T)$ 的累积奖励为 $G(\tau) = \sum_{t=0}^{T-1} R(s_t, a_t)$，强化学习的目标仍然是最大化期望累积回报：
 
-### 直接对策略求导
+$$
+J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[G(\tau)]
+$$
 
-更新参数需要算 $\nabla_\theta J(\theta)$。直接对积分里的分布求导得到 $\int \nabla_\theta p_\theta(\tau)\,G(\tau)\,d\tau$，它不再是期望形式，没法靠采样估计。利用对数导数恒等式 $\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)$ 替换后，就能把梯度重新拉回关于 $\tau \sim p_\theta(\tau)$ 的期望：
+通过 Gradient Ascent 更新参数 $\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)$（代码中等价于对 $-J(\theta)$ 做梯度下降），关键就在于求出 $\nabla_\theta J(\theta)$。如果直接把期望写成 $\int p_\theta(\tau)G(\tau)\,d\tau$ 并对 $\theta$ 求导，会同时卡在两个问题上：一是 $\nabla_\theta p_\theta(\tau)$ 不再是概率分布，无法还原为期望去做采样估计；二是轨迹分布 $p_\theta(\tau) = p(s_0)\prod_{t=0}^{T-1}\pi_\theta(a_t\mid s_t)P(s_{t+1}\mid s_t,a_t)$ 中连乘了未知的环境转移概率 $P(s_{t+1}\mid s_t,a_t)$。
 
-<figure class="rl-roadmap-figure">
---8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-log-trick.svg"
-<figcaption>利用对数导数恒等式（蓝线换橙线），把对分布的导数变回轨迹期望。</figcaption>
-</figure>
-
-再对轨迹概率 $p_\theta(\tau)$ 两侧取 $\log$，概率连乘变成求和。求 $\nabla_\theta$ 时，与 $\theta$ 无关的初始状态分布 $\log p(s_0)$ 和未知的环境转移概率 $\log P(s_{t+1}\mid s_t,a_t)$ 导数直接为 $0$，只留下策略自己的 $\sum_t \nabla_\theta \log \pi_\theta(a_t\mid s_t)$：
+借助对数导数恒等式 $\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\nabla_\theta \log p_\theta(\tau)$ 可以同时解开这两个限制：一方面外层重新凑出密度 $p_\theta(\tau)$，把积分导数还原为关于轨迹的期望；另一方面对 $p_\theta(\tau)$ 两侧取对数后连乘变为求和，与 $\theta$ 无关的初始分布 $\log p(s_0)$ 和环境转移概率 $\log P(s_{t+1}\mid s_t,a_t)$ 对 $\theta$ 求导直接归零，从而得到不依赖环境模型的策略梯度基本形式：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-derivation.svg"
-<figcaption>取对数后与 θ 无关的初始分布和转移概率求导归零，消去未知的环境模型。</figcaption>
+<figcaption>策略梯度推导路线：对数导数恒等式把导数积分还原为期望，两侧取对数在求导时消去未知的环境转移项。</figcaption>
 </figure>
 
-这样无需环境模型，按当前 $\pi_\theta$ 采出 $N$ 条轨迹做样本平均就能更新一次 $\theta$。直观上这就是加权最大似然：$G(\tau)$ 高就推高整条轨迹上动作的对数概率，反之压低。
+$$
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\left(\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right) G(\tau)\right]
+$$
+
+上式直观上就是以轨迹回报 $G(\tau)$ 为权重的加权最大似然：回报越高的轨迹，其中各步动作的对数概率 $\log \pi_\theta(a_t\mid s_t)$ 被推高得越多。这一形式也天然适合自回归 LLM——将当前上下文 $(x, y_{<t})$ 视为状态 $s_t$、第 $t$ 个生成 token $y_t$ 视为动作 $a_t$，自回归序列的对数概率本来就是逐 token 相加 $\sum_t \log \pi_\theta(y_t\mid x, y_{<t})$，既避免了长序列概率连乘的浮点下溢，又能直接对模型输出的 logits 做 `log_softmax`，沿用交叉熵训练算子。
+
+在实际训练中，朴素策略梯度按当前 $\pi_\theta$ 采样 $N$ 条轨迹估算梯度均值并执行一步参数更新。但这一基本闭环存在两个明显缺陷：一是梯度估计的方差极大（High Variance），二是每更新一次参数后旧样本立即失效（On-policy 样本利用率低）。后续的策略梯度改进正是沿着这两条主线展开的：
 
 <figure class="rl-roadmap-figure">
---8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-sample-update.svg"
-<figcaption>朴素策略梯度的采样与参数更新：每批轨迹更新一次参数后即作废。</figcaption>
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-roadmap.svg"
+<figcaption>策略梯度的执行闭环与两条改进主线：左线通过因果性与 Baseline 降方差，右线通过重要性采样与信任域约束实现旧样本复用。</figcaption>
 </figure>
 
-这个 $\log \pi_\theta$ 形式天然适合自回归 LLM：把上下文 $(x, y_{<t})$ 看作 $s_t$、第 $t$ 个 token $y_t$ 看作 $a_t$，序列对数概率本来就是 $\sum_t \log \pi_\theta(a_t\mid s_t)$，既避开了长序列概率连乘的浮点下溢，又能直接对输出 logits 做 `log_softmax`，训练目标本质就是带回报权重的交叉熵 loss。
+### 方差缩减：从 REINFORCE 到优势函数
 
-### 为什么朴素 PG 方差大，以及如何降方差
+朴素策略梯度虽然无偏，但方差极大。原因在于整条轨迹上 $T$ 步动作采样和状态转移的随机性全部压缩在单一标量 $G(\tau)$ 中，而在线采样的轨迹数 $N$ 往往有限；同时式子用整条轨迹的总回报 $G(\tau)$ 给每一步动作打分，既把 $t$ 之前无关动作产生的历史奖励混了进来，又缺少评价好坏的参考基准——例如当环境奖励恒为正数时，即便采样到较差的动作，乘上正的 $G(\tau)$ 后其概率仍会被推高。在训练过程中，过大的方差会使梯度方向剧烈抖动，正确信号被噪声淹没：学习率稍大，一次偶然的坏样本就会把策略推崩，变差的策略紧接着采出更差的数据形成恶性循环；学习率调小则收敛极慢。
 
-上面朴素 PG 估计出来的梯度虽然无偏，但方差极大（high variance），原因有三点：
+在不引入偏差的前提下，通常分两步降低方差。第一步是利用因果性（Reward-to-Go）：$t$ 时刻的动作无法影响过去的奖励，剔除 $t$ 之前的奖励项后，每个动作只由从 $t$ 开始的未来累积回报 $G_t = \sum_{k=t}^{T-1}\gamma^{k-t}R(s_k,a_k)$ 加权，用采样轨迹的 $G_t$ 直接更新参数即为经典的 REINFORCE 算法。
 
-1. 多步随机性累加：一条轨迹上每步动作采样和环境转移都有随机性，$T$ 步累加进同一个标量 $G(\tau)$，即使同一起点做同一动作，后续轨迹不同也会让 $G(\tau)$ 剧烈波动，而受交互开销限制每次采样的轨迹数 $N$ 往往很小；
-2. 信用分配粗糙：用整条轨迹的总回报 $G(\tau)$ 给每一步动作打分，$t$ 时刻的动作把 $t$ 之前无关动作拿到的奖励也算在了自己头上；
-3. 缺少基准（baseline）：梯度直接乘在 $G(\tau)$ 的绝对数值上，若奖励整体偏正（例如给所有奖励加一个正数），最优策略不变，但梯度乘子的波动会被大幅放大。
-
-高方差会直接拖垮训练：一方面信号被噪声淹没——比如回报恒为正时，采到的差动作乘上正的 $G(\tau)$ 概率依然被推高，而好动作只要后续几步运气差拿到低分就会被错误打压；另一方面梯度方向剧烈抖动，学习率稍大，一次坏样本就会把策略推崩，变差的策略又采出更差的数据形成恶性循环，学习率调小则收敛极慢、样本效率极低。
-
-针对后两个根源，有两个不引入偏差的降方差手段：
-
-- 利用因果性（reward-to-go）：动作 $a_t$ 影响不了过去，去掉 $t$ 之前的奖励，只保留从 $t$ 开始的回报 $G_t$ 来加权（用采样轨迹代入更新就是 REINFORCE）；
-- 减去状态基线 $b(s_t)$：由于 $\mathbb{E}_{a_t\sim\pi_\theta}[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)] = 0$，减去只依赖状态的函数不改变梯度期望。取 $b(s_t) = V_{\pi_\theta}(s_t)$，权重在期望下正好变成优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
+第二步是引入状态相关的基线函数（baseline）$b(s_t)$，将权重改为 $G_t - b(s_t)$ 以消除奖励整体偏移带来的波动。由于 $\mathbb{E}_{a_t\sim\pi_\theta}[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)] = b(s_t)\nabla_\theta \sum_{a_t}\pi_\theta(a_t\mid s_t) = 0$，减去 $b(s_t)$ 不改变梯度的期望。通常取状态价值函数 $b(s_t) = V_{\pi_\theta}(s_t)$，结合 $\mathbb{E}[G_t\mid s_t,a_t] = Q_{\pi_\theta}(s_t,a_t)$，梯度权重在期望意义下就化为优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
 
 $$
-\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta(\tau)}\!\left[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A_{\pi_\theta}(s_t, a_t)\right]
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A_{\pi_\theta}(s_t, a_t)\right]
 $$
 
-这样高于平均水平（$A > 0$）的动作涨概率，低于平均水平（$A < 0$）的动作降概率。
+这样一来，表现高于当前状态平均水平（$A > 0$）的动作概率上升，低于平均水平（$A < 0$）的动作概率下降。
 
 ### 重要性采样与 Off-Policy 修正
 
-上图左下角的“仅使用一次”暴露了另一个痛点：期望要求数据来自当前的 $\pi_\theta$（on-policy），$\theta$ 更新一步后旧数据分布就失效了。想复用旧策略 $\pi_{\theta_{\text{old}}}$ 采出的数据多次更新 $\pi_\theta$，在两者足够接近时可做单步重要性采样修正，得到代理目标（surrogate objective）：
+朴素策略梯度的另一个局限在于其严格的 on-policy 属性：梯度期望要求轨迹必须由当前策略 $\pi_\theta$ 采集，参数 $\theta$ 更新一步后策略分布发生改变，刚才采集的轨迹随即作废，在大模型长序列采样等高成本场景下尤为昂贵。
+
+为了复用旧策略 $\pi_{\theta_{\text{old}}}$ 采集的数据对当前策略 $\pi_\theta$ 进行多步更新，需要通过重要性采样修正两个分布之间的差异。当新旧策略足够接近、状态访问分布近似相同时，可以对单步动作乘上概率比，得到 Off-policy 代理优化目标（surrogate objective）：
 
 $$
 J^{\text{IS}}(\theta) = \mathbb{E}_{(s_t, a_t) \sim \pi_{\theta_{\text{old}}}}\!\left[\frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}\, A_{\pi_{\theta_{\text{old}}}}(s_t, a_t)\right]
 $$
 
-到这里就留下两个问题交给后面两节：一是怎么低方差地估出优势函数 $A$（Actor-Critic）；二是怎么保证 $\pi_\theta$ 不偏离 $\pi_{\theta_{\text{old}}}$ 太远，防止重要性权重爆炸导致策略崩溃（TRPO 与 PPO）。
+顺着上面两条改进主线往下走，自然就引出了后续两节的核心内容：一是如果仍靠完整轨迹回报 $G_t$ 来算优势函数 $A$，单条长轨迹的方差依然偏大，需要结合 TD 学习一个价值网络做低方差估计，即下一节的 Actor-Critic；二是若多步更新中 $\pi_\theta$ 偏离 $\pi_{\theta_{\text{old}}}$ 过远，重要性权重 $\frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ 会剧烈震荡导致策略崩溃，必须对单次策略更新加上信任域约束，即后面的 TRPO 与 PPO。
 
 ## Actor-Critic
 

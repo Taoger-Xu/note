@@ -1,61 +1,28 @@
-<svg class="rl-roadmap" viewBox="0 0 720 432" role="img" aria-label="对轨迹概率两侧取对数并关于 θ 求导：初始状态分布 p(s_0) 与环境转移概率 P(s_{t+1}|s_t,a_t) 与 θ 无关，求导直接消去，得到不依赖环境模型的策略梯度公式。">
-<defs><marker id="pg-deriv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
-<rect class="rl-band" x="16" y="14" width="688" height="404" rx="14"/>
-<text class="rl-math" x="172" y="58" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>, …, <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">T</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-brace" d="M 96.0 68.0 Q 96.0 72.0 103.0 72.0 H 165.0 Q 172.0 72.0 172.0 76.0 Q 172.0 72.0 179.0 72.0 H 241.0 Q 248.0 72.0 248.0 68.0"/>
-<text class="rl-math-sm" x="172" y="94" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
-<text class="rl-math" x="262" y="58" text-anchor="start">= <tspan font-style="italic">p</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>)</text>
-<text class="rl-math-op" x="344.0" y="60.0" text-anchor="middle">∏</text>
-<text class="rl-math-sm" x="344.0" y="77.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="344.0" y="35.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="368" y="58" text-anchor="start"><tspan font-style="italic">π</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>) · <tspan font-style="italic">P</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-edge" d="M 88 58 C 56 72, 56 130, 86 144" marker-end="url(#pg-deriv-arrow)"/>
-<text class="rl-edge-label" x="34" y="108" text-anchor="start">两侧</text>
-<text class="rl-edge-label" x="34" y="125" text-anchor="start">取 log</text>
-<text class="rl-math" x="134" y="148" text-anchor="middle">log <tspan font-style="italic">p</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
-<path class="rl-ul-green" d="M 96 159 H 172"/>
-<text class="rl-math" x="184" y="148" text-anchor="start">= log <tspan font-style="italic">p</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>) +</text>
-<text class="rl-math-op" x="308.0" y="150.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="308.0" y="167.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="308.0" y="125.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="330" y="148" text-anchor="start">log <tspan font-style="italic">π</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>) +</text>
-<text class="rl-math-op" x="480.0" y="150.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="480.0" y="167.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="480.0" y="125.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="502" y="148" text-anchor="start">log <tspan font-style="italic">P</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-ul-green" d="M 200 174 H 676"/>
-<path class="rl-brace" d="M 186.0 206.0 Q 186.0 201.0 193.0 201.0 H 426.0 Q 433.0 201.0 433.0 196.0 Q 433.0 201.0 440.0 201.0 H 673.0 Q 680.0 201.0 680.0 206.0"/>
-<text class="rl-math" x="42" y="248" text-anchor="start">∇<tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan> log <tspan font-style="italic">p</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">τ</tspan>) = ∇<tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan></text>
-<path class="rl-brace" stroke-opacity="0.85" d="M 192.5 214.0 H 186.0 V 276.0 H 192.5"/>
-<text class="rl-math" x="236" y="248" text-anchor="middle">log <tspan font-style="italic">p</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-strike" d="M 198 260 L 274 230"/>
-<text class="rl-math" x="292" y="248" text-anchor="middle">+</text>
-<text class="rl-math-op" x="320.0" y="250.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="320.0" y="267.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="320.0" y="225.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="342" y="248" text-anchor="start">log <tspan font-style="italic">π</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>) +</text>
-<text class="rl-math-op" x="492.0" y="250.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="492.0" y="267.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="492.0" y="225.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="594" y="248" text-anchor="middle">log <tspan font-style="italic">P</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-strike" d="M 514 260 L 672 228"/>
-<path class="rl-brace" stroke-opacity="0.85" d="M 677.5 214.0 H 684.0 V 276.0 H 677.5"/>
-<text class="rl-lane-label rl-red" x="435" y="302" text-anchor="middle">初始分布 <tspan font-style="italic">p</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">0</tspan><tspan dy="-4.5">​</tspan>) 与环境转移 <tspan font-style="italic">P</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>) 均与 <tspan font-style="italic">θ</tspan> 无关，对 <tspan font-style="italic">θ</tspan> 求导为 0</text>
-<path class="rl-deep" d="M 34 322 H 686"/>
-<text class="rl-math" x="96" y="374" text-anchor="start">∇<tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) = 𝔼</text>
-<text class="rl-math-sm" x="190" y="382" text-anchor="start"><tspan font-style="italic">τ</tspan>~<tspan font-style="italic">p</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
-<path class="rl-brace" stroke-opacity="0.85" d="M 262.5 340.0 H 256.0 V 402.0 H 262.5"/>
-<path class="rl-brace" stroke-opacity="0.85" d="M 275.0 344.0 Q 265.5 371.0 275.0 398.0"/>
-<text class="rl-math-op" x="294.0" y="376.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="294.0" y="393.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="294.0" y="351.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="316" y="374" text-anchor="start">∇<tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan> log <tspan font-style="italic">π</tspan><tspan dy="4.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-4.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-brace" stroke-opacity="0.85" d="M 457.0 344.0 Q 466.5 371.0 457.0 398.0"/>
-<path class="rl-brace" stroke-opacity="0.85" d="M 485.0 344.0 Q 475.5 371.0 485.0 398.0"/>
-<text class="rl-math-op" x="504.0" y="376.0" text-anchor="middle">∑</text>
-<text class="rl-math-sm" x="504.0" y="393.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
-<text class="rl-math-sm" x="504.0" y="351.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
-<text class="rl-math" x="526" y="374" text-anchor="start"><tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan>)</text>
-<path class="rl-brace" stroke-opacity="0.85" d="M 607.0 344.0 Q 616.5 371.0 607.0 398.0"/>
-<path class="rl-brace" stroke-opacity="0.85" d="M 619.5 340.0 H 626.0 V 402.0 H 619.5"/>
+<svg class="rl-roadmap" viewBox="0 0 720 532" role="img" aria-label="策略梯度推导路线图：左侧主线从参数化目标 J(θ) 经分布导数积分、对数概率梯度期望到无模型策略梯度公式；右侧展示直接求导的两个卡点，以及对数导数恒等式与两侧取对数消去环境项两步解法。">
+<defs><marker id="pgd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="18" y="16" width="332" height="500" rx="14"/>
+<text class="rl-lane-label rl-policy" x="184" y="48" text-anchor="middle">推导主线 · Derivation</text>
+<rect class="rl-band" x="382" y="16" width="320" height="500" rx="14"/>
+<text class="rl-lane-label rl-value" x="542" y="48" text-anchor="middle">卡点与关键变换 · Key Tricks</text>
+<path class="rl-edge" d="M 184 138 V 188" marker-end="url(#pgd-arrow)"/>
+<text class="rl-edge-label" x="196" y="168" text-anchor="start">展开期望并对 θ 求导</text>
+<path class="rl-edge" d="M 184 258 V 308" marker-end="url(#pgd-arrow)"/>
+<text class="rl-edge-label" x="196" y="288" text-anchor="start">代入恒等式，还原期望</text>
+<path class="rl-edge" d="M 184 378 V 428" marker-end="url(#pgd-arrow)"/>
+<text class="rl-edge-label" x="196" y="408" text-anchor="start">消去环境项，仅留策略项</text>
+<path class="rl-edge rl-borrow" d="M 332 214 L 398 148" marker-end="url(#pgd-arrow)"/>
+<path class="rl-edge rl-borrow" d="M 400 326 H 335" marker-end="url(#pgd-arrow)"/>
+<path class="rl-edge rl-borrow" d="M 400 462 H 335" marker-end="url(#pgd-arrow)"/>
+<g class="rl-node rl-policy"><rect x="36" y="70" width="296" height="68" rx="10"/><text class="rl-title" x="184" y="98" text-anchor="middle">1. 参数化优化目标</text><text class="rl-sub" x="184" y="121" text-anchor="middle">J(θ) = E[G(τ)] = ∫ p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) G(τ) dτ</text></g>
+<g class="rl-node rl-policy"><rect x="36" y="190" width="296" height="68" rx="10"/><text class="rl-title" x="184" y="218" text-anchor="middle">2. 轨迹分布导数积分</text><text class="rl-sub" x="184" y="241" text-anchor="middle">∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>J(θ) = ∫ ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) · G(τ) dτ</text></g>
+<g class="rl-node rl-policy"><rect x="36" y="310" width="296" height="68" rx="10"/><text class="rl-title" x="184" y="338" text-anchor="middle">3. 对数概率梯度期望</text><text class="rl-sub" x="184" y="361" text-anchor="middle">∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>J(θ) = E[ ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> log p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) · G(τ) ]</text></g>
+<g class="rl-node rl-green"><rect x="36" y="430" width="296" height="68" rx="10"/><text class="rl-title" x="184" y="458" text-anchor="middle">4. 无模型策略梯度</text><text class="rl-sub" x="184" y="481" text-anchor="middle">E[ (∑<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> log π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> | s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>)) G(τ) ]</text></g>
+<rect class="rl-deep" x="400" y="70" width="284" height="112" rx="10"/>
+<text class="rl-title" x="542" y="98" text-anchor="middle">直接求导的两个卡点</text>
+<text class="rl-sub" x="542" y="124" text-anchor="middle">① ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) 非分布，无法采样估计</text>
+<text class="rl-sub" x="542" y="148" text-anchor="middle">② p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) 连乘含未知转移 P(s′ | s, a)</text>
+<g class="rl-node rl-value"><rect x="400" y="270" width="284" height="108" rx="10"/><text class="rl-title" x="542" y="298" text-anchor="middle">技巧一：对数导数恒等式</text><text class="rl-sub" x="542" y="324" text-anchor="middle">∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) = p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ) · ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> log p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ)</text><text class="rl-sub" x="542" y="348" text-anchor="middle">重凑密度 p<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(τ)，把积分变回期望</text></g>
+<g class="rl-node rl-value"><rect x="400" y="396" width="284" height="108" rx="10"/><text class="rl-title" x="542" y="424" text-anchor="middle">技巧二：两侧取 log 消环境项</text><text class="rl-sub" x="542" y="450" text-anchor="middle">log p(s<tspan dy="3.5" font-size="13">0</tspan><tspan dy="-3.5">​</tspan>) + ∑ log π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> + ∑ log P</text><text class="rl-lane-label rl-red" x="542" y="482" text-anchor="middle">p(s<tspan dy="3.5" font-size="13">0</tspan><tspan dy="-3.5">​</tspan>) 与 P 与 θ 无关，求导归零</text></g>
+<path class="rl-strike" d="M 442 456 L 498 439"/>
+<path class="rl-strike" d="M 595 456 L 644 439"/>
 </svg>
