@@ -238,43 +238,57 @@ $$
 
 ## 策略梯度
 
+### 直接优化策略的目标
+
 前面的方法都是先学 $Q(s,a)$，再用 $\arg\max_a Q(s,a)$ 间接得到策略。这一步在两种情况下会出问题：动作空间连续或很大时（比如 LLM 的词表），$\max_a$ 很难算；$Q$ 有一点误差，argmax 选出的动作就可能突变，策略不稳定。
 
-既然最终要的是策略，更直接的做法是把策略本身参数化为 $\pi_\theta(a\mid s)$，然后直接优化 RL 的目标：
+既然最终要的是策略，更直接的做法是把策略本身参数化为 $\pi_\theta(a\mid s)$，直接最大化期望轨迹回报 $J(\theta) = \mathbb{E}_{\tau \sim p_\theta(\tau)}[G(\tau)]$，其中 $G(\tau) = \sum_{t=0}^{T-1} R(s_t, a_t)$。整个优化过程就是一个“采样轨迹 → 估计回报 → 沿梯度 $\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)$ 改进策略”的循环：
 
-$$
-J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[G(\tau)], \qquad G(\tau) = \sum_{t=0}^{T-1} R(s_t, a_t)
-$$
-
-只要能算出 $\nabla_\theta J(\theta)$，就可以用梯度上升 $\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)$ 去找最优策略，这就是策略梯度（Policy Gradient）。
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-loop.svg"
+<figcaption>直接优化策略的目标与三步循环：运行策略采样轨迹、估计期望回报、沿梯度上升方向更新参数 θ。</figcaption>
+</figure>
 
 ### 怎么算梯度
 
-把期望写成积分 $J(\theta) = \int p_\theta(\tau)\,G(\tau)\,d\tau$，直接求导会遇到两个问题：
+上面的循环里前两步采样算回报很直接，核心是怎么算第三步的 $\nabla_\theta J(\theta)$。把期望写成积分 $J(\theta) = \int p_\theta(\tau)\,G(\tau)\,d\tau$ 直接求导会遇到两个卡点：一是 $\int \nabla_\theta p_\theta(\tau)\,G(\tau)\,d\tau$ 不再是期望形式，没法用采样来估计；二是轨迹生成概率 $p_\theta(\tau) = p(s_0)\prod_{t=0}^{T-1} \pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t)$ 里连乘了未知的环境转移概率 $P$。
 
-- $\int \nabla_\theta p_\theta(\tau)\,G(\tau)\,d\tau$ 不再是期望形式，没法用采样来估计
-- 轨迹概率 $p_\theta(\tau) = p(s_0)\prod_t \pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t)$ 里有未知的环境转移 $P$
-
-用对数导数技巧 $\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)$ 可以同时解决这两个问题：外面重新凑出了 $p_\theta(\tau)$，积分变回期望；里面取了 log，连乘变成求和，$p(s_0)$ 和 $P$ 与 $\theta$ 无关，求导后直接为 0。
+第一步，利用对数导数恒等式 $\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)$ 替换积分里的导数项，外面重新凑出了密度 $p_\theta(\tau)$，把积分变回关于轨迹分布的期望：
 
 <figure class="rl-roadmap-figure">
---8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-derivation.svg"
-<figcaption>左边是推导主线，右边是两个卡点和对应的变换。</figcaption>
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-diff-1.svg"
+<figcaption>第一步：利用对数导数恒等式（蓝线换橙线），把分布导数的积分变回轨迹期望。</figcaption>
 </figure>
 
-最后得到策略梯度的基本形式：
+第二步，对轨迹概率 $p_\theta(\tau)$ 两侧取 log，概率连乘变成求和。代入 $\nabla_\theta \log p_\theta(\tau)$ 求导时，与 $\theta$ 无关的初始分布 $\log p(s_0)$ 和未知的环境转移 $\log P(s_{t+1}\mid s_t, a_t)$ 直接归零消掉，只剩下策略自己的对数梯度之和：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-diff-2.svg"
+<figcaption>第二步：两侧取 log 后，初始分布与环境转移项对 θ 求导为 0（红线划去），得到无模型策略梯度。</figcaption>
+</figure>
+
+### REINFORCE 算法与对比 SFT
+
+把上面推出来的期望梯度换成 $N$ 条采样轨迹的均值，代回开头的三步循环，就得到最基础的 REINFORCE 算法：
+
+1. 按当前策略 $\pi_\theta(a_t\mid s_t)$ 与环境交互，采样 $N$ 条轨迹 $\{\tau^{(i)}\}_{i=1}^N$
+2. 用样本平均估计策略梯度：$\nabla_\theta J(\theta) \approx \frac{1}{N}\sum_{i=1}^N \big(\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t^{(i)}\mid s_t^{(i)})\big)\big(\sum_{t=0}^{T-1} R(s_t^{(i)}, a_t^{(i)})\big)$
+3. 沿梯度上升更新参数：$\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)$
+
+怎么直观理解这个式子？把它和普通 SFT（最大似然估计，Maximum Likelihood）的梯度放在一起对比：
 
 $$
-\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\left(\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right) G(\tau)\right]
+\begin{aligned}
+\text{Policy Gradient:} \quad \nabla_\theta J(\theta) &\approx \frac{1}{N}\sum_{i=1}^{N}\left(\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t^{(i)} \mid s_t^{(i)})\right)\!\left(\sum_{t=0}^{T-1} R(s_t^{(i)}, a_t^{(i)})\right) \\
+\text{Maximum Likelihood (SFT):} \quad \nabla_\theta J_{\text{ML}}(\theta) &\approx \frac{1}{N}\sum_{i=1}^{N}\left(\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t^{(i)} \mid s_t^{(i)})\right)
+\end{aligned}
 $$
 
-这个式子只需要 $\log \pi_\theta$ 和采样得到的回报，不需要环境模型。实际训练时按当前策略采 $N$ 条轨迹，用样本平均代替期望。直观上它就是加权的最大似然：回报高的轨迹，推高其中每个动作的概率；回报低的则压低。
-
-LLM 正好适合这个形式。把上下文 $(x, y_{<t})$ 看作状态、下一个 token $y_t$ 看作动作，整条回答的对数概率本来就是逐 token 相加 $\sum_t \log \pi_\theta(y_t\mid x, y_{<t})$，对 logits 做一次 `log_softmax` 就能拿到，相当于给交叉熵 loss 乘上一个回报权重。
+两式的唯一区别就是后面多乘了一个轨迹总回报 $G(\tau^{(i)}) = \sum_{t=0}^{T-1} R(s_t^{(i)}, a_t^{(i)})$。普通 SFT 的数据来自现成的专家示范，默认每条样本都是对的（权重恒为 $+1$），无差别推高轨迹上每一步动作的对数概率；而 REINFORCE 没有标准答案，数据靠模型自己采样试错（trial-and-error），本质上就是按回报加权的 SFT：高回报轨迹推高概率，负回报轨迹反向压低概率。放到自回归 LLM 上，把上下文 $(x, y_{<t})$ 看作状态 $s_t$、第 $t$ 个 token $y_t$ 看作动作 $a_t$，对输出 logits 做一次 `log_softmax` 就拿到 $\log \pi_\theta(a_t\mid s_t)$，训练目标就是给逐 token 的交叉熵 loss 乘上回报权重。
 
 ### 朴素策略梯度的两个问题
 
-上面的算法是一个"采样 → 估计梯度 → 更新"的循环，它有两个问题，后面的改进基本都是围绕这两点展开的：
+从“按回报加权的 SFT”这个视角看，上面的基础 REINFORCE 循环有两个明显问题，后面的改进都是围绕这两点展开的：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-roadmap.svg"
@@ -285,17 +299,17 @@ LLM 正好适合这个形式。把上下文 $(x, y_{<t})$ 看作状态、下一�
 
 - 一条轨迹上每一步的动作采样和状态转移都有随机性，全部累加到 $G(\tau)$ 里，而采样的轨迹数 $N$ 又有限
 - $t$ 时刻之前拿到的奖励和动作 $a_t$ 无关，却也算进了它的权重
-- 权重是 $G(\tau)$ 的绝对值，如果奖励都是正的，差动作的概率也会被推高，只是推高得少一点
+- 权重是 $G(\tau)$ 的绝对值，如果奖励都是正的，差动作乘上正的回报依然像 SFT 一样被推高概率，只是推高得少一点
 
 方差大意味着梯度方向抖动严重。学习率大了，一批坏样本就可能把策略推坏，坏策略又采出更差的数据；学习率小了，收敛又很慢。
 
-第二个问题是数据只能用一次。期望要求轨迹来自当前的 $\pi_\theta$，$\theta$ 更新一步之后，这批数据就不再服从新策略的分布了，只能扔掉重新采样。
+第二个问题是数据只能用一次。普通 SFT 的静态数据集可以反复训多个 epoch；而这里的期望要求轨迹来自当前的 $\pi_\theta$，$\theta$ 更新一步之后数据就不再服从新策略的分布了，只能扔掉重采。
 
 ### 降方差：reward-to-go 与 baseline
 
 针对方差，有两个不引入偏差的改法。
 
-一是利用因果性。$a_t$ 影响不了之前的奖励，所以只用它之后的回报 $G_t = \sum_{k=t}^{T-1} R(s_k, a_k)$ 作为权重。用采样的 $G_t$ 直接更新，就是 REINFORCE。
+一是利用因果性。$a_t$ 影响不了之前的奖励，所以把权重从整条轨迹总回报 $G(\tau)$ 收紧为 $t$ 之后的未来回报 $G_t = \sum_{k=t}^{T-1} R(s_k, a_k)$（即 reward-to-go）。
 
 二是减去一个只和状态有关的 baseline $b(s_t)$，权重变成 $G_t - b(s_t)$。这样做不改变梯度的期望，因为
 

@@ -1,0 +1,50 @@
+<svg class="rl-roadmap" viewBox="0 0 720 384" role="img" aria-label="直接对策略求导（第一步）：利用对数导数恒等式 p_θ(τ) ∇_θ log p_θ(τ) = ∇_θ p_θ(τ)，将对轨迹分布的积分导数还原为期望形式。">
+<rect class="rl-band" x="16" y="14" width="688" height="356" rx="14"/>
+<text class="rl-math" x="28" y="60" text-anchor="start"><tspan font-style="italic">θ</tspan>* = arg max</text>
+<text class="rl-math-sm" x="120" y="77" text-anchor="middle" font-style="italic">θ</text>
+<text class="rl-math" x="148" y="60" text-anchor="start">𝔼</text>
+<text class="rl-math-sm" x="166" y="68" text-anchor="start"><tspan font-style="italic">τ</tspan>~<tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 238.0 28.0 H 232.0 V 86.0 H 238.0"/>
+<text class="rl-math-op" x="254.0" y="62.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="254.0" y="78.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="254.0" y="38.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="276" y="60" text-anchor="start"><tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="12.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="12.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 352.0 28.0 H 358.0 V 86.0 H 352.0"/>
+<path class="rl-brace" d="M 146.0 90.0 Q 146.0 94.0 152.5 94.0 H 246.5 Q 253.0 94.0 253.0 98.0 Q 253.0 94.0 259.5 94.0 H 353.5 Q 360.0 94.0 360.0 90.0"/>
+<text class="rl-math-sm" x="253" y="115" text-anchor="middle"><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>)</text>
+<text class="rl-math" x="28" y="162" text-anchor="start"><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) = 𝔼</text>
+<text class="rl-math-sm" x="102" y="170" text-anchor="start"><tspan font-style="italic">τ</tspan>~<tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<text class="rl-math" x="166" y="162" text-anchor="start">[<tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>)]</text>
+<path class="rl-brace" d="M 172.0 168.0 Q 172.0 171.5 178.5 171.5 H 186.5 Q 193.0 171.5 193.0 175.0 Q 193.0 171.5 199.5 171.5 H 207.5 Q 214.0 171.5 214.0 168.0"/>
+<text class="rl-math-sm" x="193" y="192" text-anchor="middle">∑<tspan dy="4" font-size="12.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan> <tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="4" font-size="12.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="4" font-size="12.5" font-style="italic">t</tspan><tspan dy="-4">​</tspan>)</text>
+<text class="rl-math" x="228" y="162" text-anchor="start">=</text>
+<text class="rl-math-op" x="254" y="169" text-anchor="middle">∫</text>
+<text class="rl-math" x="268" y="162" text-anchor="start"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>) <tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>) d<tspan font-style="italic">τ</tspan></text>
+<rect class="rl-callout" x="378" y="28" width="314" height="164" rx="12"/>
+<text class="rl-lane-label rl-value" x="396" y="56" text-anchor="start">对数导数恒等式 · Identity</text>
+<text class="rl-math" x="482" y="106" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>) ∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan> log <tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-ul-amber" d="M 404 117 H 560"/>
+<text class="rl-math" x="580" y="106" text-anchor="middle">=</text>
+<text class="rl-math" x="614" y="106" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<text class="rl-math-sm" x="660" y="92" text-anchor="middle">∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 634 100 H 686"/>
+<text class="rl-math-sm" x="660" y="118" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<text class="rl-math" x="516" y="162" text-anchor="middle">=</text>
+<text class="rl-math" x="568" y="162" text-anchor="middle">∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-ul-blue" d="M 538 173 H 598"/>
+<path class="rl-deep" d="M 30 220 H 690"/>
+<text class="rl-math" x="56" y="272" text-anchor="start">∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) =</text>
+<text class="rl-math-op" x="150" y="279" text-anchor="middle">∫</text>
+<text class="rl-math" x="196" y="272" text-anchor="middle">∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-ul-blue" d="M 166 283 H 226"/>
+<text class="rl-math" x="234" y="272" text-anchor="start"><tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>) d<tspan font-style="italic">τ</tspan></text>
+<text class="rl-math" x="322" y="272" text-anchor="middle">=</text>
+<text class="rl-math-op" x="348" y="279" text-anchor="middle">∫</text>
+<text class="rl-math" x="442" y="272" text-anchor="middle"><tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>) ∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan> log <tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<path class="rl-ul-amber" d="M 366 283 H 518"/>
+<text class="rl-math" x="526" y="272" text-anchor="start"><tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>) d<tspan font-style="italic">τ</tspan></text>
+<text class="rl-math" x="128" y="334" text-anchor="middle">=</text>
+<text class="rl-math" x="148" y="334" text-anchor="start">𝔼</text>
+<text class="rl-math-sm" x="166" y="342" text-anchor="start"><tspan font-style="italic">τ</tspan>~<tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>)</text>
+<text class="rl-math" x="232" y="334" text-anchor="start">[∇<tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan> log <tspan font-style="italic">p</tspan><tspan dy="4" font-size="12.5" font-style="italic">θ</tspan><tspan dy="-4">​</tspan>(<tspan font-style="italic">τ</tspan>) <tspan font-style="italic">G</tspan>(<tspan font-style="italic">τ</tspan>)]</text>
+</svg>
