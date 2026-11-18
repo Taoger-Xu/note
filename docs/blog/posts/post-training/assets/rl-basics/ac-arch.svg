@@ -1,0 +1,27 @@
+<svg class="rl-roadmap" viewBox="0 0 720 336" role="img" aria-label="Critic 价值网络的两种常见架构：左侧为独立价值网络 V_ϕ（如 InstructGPT），右侧为共享策略主干加线性价值头并通过 stop-gradient 截断梯度（如 MIXER）。">
+<defs>
+<marker id="aca-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker>
+<marker id="aca-red-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path fill="var(--rl-red)" d="M0 1 L9 5 L0 9 Z"/></marker>
+</defs>
+<rect class="rl-band" x="16" y="14" width="334" height="308" rx="14"/>
+<text class="rl-title" x="183" y="44" text-anchor="middle">独立价值网络 · Separate Network</text>
+<text class="rl-math" x="183" y="78" text-anchor="middle">状态 <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan></text>
+<path class="rl-edge" d="M 183 86 V 110" marker-end="url(#aca-arrow)"/>
+<g class="rl-node rl-green"><rect x="40" y="114" width="286" height="92" rx="10"/><text class="rl-title" x="183" y="152" text-anchor="middle">独立价值网络 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan></text><text class="rl-sub" x="183" y="178" text-anchor="middle">独立骨干网络与输出层（参数 <tspan font-style="italic">ϕ</tspan>）</text></g>
+<path class="rl-edge" d="M 183 206 V 230" marker-end="url(#aca-arrow)"/>
+<text class="rl-math" x="183" y="254" text-anchor="middle">预测价值 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-sub" x="40" y="284" text-anchor="start">价值损失训练整套网络 <tspan font-style="italic">ϕ</tspan>，梯度互不干扰</text>
+<text class="rl-sub" x="40" y="305" text-anchor="start">代表：InstructGPT / 标准 PPO（显存翻倍）</text>
+<rect class="rl-band" x="370" y="14" width="334" height="308" rx="14"/>
+<text class="rl-title" x="537" y="44" text-anchor="middle">共享策略主干 · Value Head</text>
+<text class="rl-math" x="537" y="78" text-anchor="middle">状态 <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan></text>
+<path class="rl-edge" d="M 537 86 V 106" marker-end="url(#aca-arrow)"/>
+<g class="rl-node rl-value"><rect x="394" y="108" width="286" height="44" rx="8"/><text class="rl-title" x="537" y="136" text-anchor="middle">策略主干网络（<tspan font-style="italic">θ</tspan> 的一部分）</text></g>
+<path fill="none" stroke="var(--rl-red)" stroke-width="1.8" d="M 468 152 V 176" marker-end="url(#aca-red-arrow)"/>
+<text class="rl-lane-label rl-red" x="480" y="170" text-anchor="start">stop-gradient（截断梯度）</text>
+<g class="rl-node rl-policy"><rect x="394" y="178" width="286" height="44" rx="8"/><text class="rl-title" x="537" y="206" text-anchor="middle">线性价值头 <tspan font-style="italic">ϕ</tspan> · Linear Head</text></g>
+<path class="rl-edge" d="M 537 222 V 236" marker-end="url(#aca-arrow)"/>
+<text class="rl-math" x="537" y="256" text-anchor="middle">预测价值 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-sub" x="394" y="284" text-anchor="start">价值损失仅更新线性头 <tspan font-style="italic">ϕ</tspan>，大幅节省显存</text>
+<text class="rl-sub" x="394" y="305" text-anchor="start">代表：MIXER 等共享特征架构</text>
+</svg>

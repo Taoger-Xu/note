@@ -232,9 +232,21 @@ $$
 Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha\big(R_{t+1} + \gamma \max_{a'} Q(S_{t+1}, a') - Q(S_t, A_t)\big)
 $$
 
-它对应贝尔曼最优方程，直接逼近 $Q^*$。采样用的是 $\varepsilon$-greedy 策略，学习的却是贪心策略，属于 off-policy，因此也可以用其他策略或历史数据来学习。
+它对应贝尔曼最优方程，直接逼近 $Q^*$。采样用的是 $\varepsilon$-greedy 策略，学习的却是贪心策略，属于 off-policy，因此可以把历史交互数据存进经验回放池（Replay Buffer）反复采样学习；当状态空间很大时（比如 Atari 的屏幕像素），$Q$ 没法用表格存下，改用神经网络 $Q_\phi(s,a)$ 来近似，这就是 DQN。
 
-当状态空间很大时（比如 Atari 的屏幕像素），$Q$ 没法用表格存下，就需要用神经网络 $Q_\theta(s,a)$ 来近似，这就是 DQN。
+换一个视角看（与后文的 Actor-Critic 打通），**Q-learning / DQN 其实可以直接从带经验回放池的 Off-policy Actor-Critic 退化得到，核心就在于把显式参数化策略 $\pi_\theta$ 换成了由 $Q_\phi$ 决定的隐式贪心策略**：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-to-qlearning.svg"
+<figcaption>从带 Replay Buffer 的 Off-Policy Actor-Critic 导出 Q-Learning：用 argmax Q_ϕ 的隐式策略取代参数化策略 π_θ 后，直接省去策略梯度更新（第 4、5 步），第 2 步对动作的期望自动变成 max。</figcaption>
+</figure>
+
+在原本的 Off-policy Actor-Critic 中，每次从回放池采出一批转移样本后，先算期望目标 $y_i = R(s_i, a_i) + \gamma\,\mathbb{E}_{a'\sim\pi_\theta}[Q_\phi(s_i', a')]$ 来回归更新 Critic 参数 $\phi$（第 2、3 步），再用策略梯度更新显式 Actor 参数 $\theta$（第 4、5 步）。如果不单独维护参数化的 $\pi_\theta$，而是直接令策略为以概率 $1$ 选 $\arg\max_{a'} Q_\phi(s, a')$ 的**隐式策略**（采样交互时外加 $\varepsilon$-greedy 负责探索），就会同时发生两件事：
+
+- 没有了待优化的策略参数 $\theta$，第 4、5 步的策略梯度更新直接省去；
+- 第 2 步对下一状态动作求期望 $\mathbb{E}_{a'\sim\pi}[Q_\phi(s_i', a')]$ 自动变成 $\max_{a'} Q_\phi(s_i', a')$，回归目标直接化为 $y_i = R(s_i, a_i) + \gamma \max_{a'} Q_\phi(s_i', a')$。
+
+剩下的第 1～3 步循环，就恰好是带经验回放池的 Q-learning（DQN）算法。
 
 ## 策略梯度
 
@@ -366,28 +378,84 @@ $$
 <figcaption>REINFORCE 只沿单条采样分支（红线）累加回报，而 Actor-Critic 用价值函数拟合整片扇面的期望价值，从而给出低方差的优势估计。</figcaption>
 </figure>
 
-Actor-Critic 的本质就是专门引入一个参数化的价值网络（Critic）去拟合期望价值，用来更准、更低方差地估计 $A_{\pi_\theta}(s_t, a_t)$，把前面两条主线（Value-based 的 TD 价值估计与 Policy-based 的策略梯度）结合起来：
+Actor-Critic 的本质就是专门引入一个参数化的价值网络（Critic）去拟合期望价值，用来更准、更低方差地估计 $A_{\pi_\theta}(s_t, a_t)$：Actor（策略网络 $\pi_\theta$）负责与环境交互选动作并按优势更新策略，Critic（价值网络 $V_\phi$）负责评估价值给 Actor 提供低方差信号。
 
-- **Actor（策略网络 $\pi_\theta(a\mid s)$）**：负责与环境交互选动作，并按 Critic 给出的优势估计 $\hat{A}_t$ 更新策略参数 $\theta$
-- **Critic（价值网络 $V_\phi(s)$）**：负责评估状态好坏，通过回归损失最小化价值预测误差来更新参数 $\phi$
+### 拟合 $V_\phi(s)$ 并由贝尔曼方程算优势
 
-### 用单网络 $V_\phi$ 估计优势与 GAE
+式子里同时出现了 $Q_\pi$、$V_\pi$ 和 $A_\pi$，究竟该用神经网络去拟合哪一个？利用贝尔曼期望方程 $Q_\pi(s_t, a_t) = R(s_t, a_t) + \gamma\,\mathbb{E}_{s_{t+1}}[V_\pi(s_{t+1})]$，在已经采集到的真实单步转移 $(s_t, a_t, R(s_t,a_t), s_{t+1})$ 上用样本近似期望，$Q_\pi$ 就可以直接用 $V_\pi$ 表示出来。因此最常见的 Actor-Critic 方法**只用 rollout 数据去拟合一个仅依赖状态的网络 $V_\phi(s) \approx V_\pi(s)$**（不依赖动作 $a$，输入空间更小、样本效率更高），再结合采样轨迹算出优势估计，构成“采样轨迹 → 拟合 $V_\phi(s)$ → 改进策略”的闭环：
 
-表面上看算 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$ 似乎要同时学 $Q$ 和 $V$ 两个网络，实际上只学一个状态价值网络 $V_\phi(s)$ 就够了。利用贝尔曼期望关系 $Q_{\pi_\theta}(s_t, a_t) = \mathbb{E}[R(s_t, a_t) + \gamma V_{\pi_\theta}(s_{t+1}) \mid s_t, a_t]$，拿交互采到的真实一步奖励加上下一状态的价值估计做 bootstrapping，就能直接得到一步优势估计：
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-fit-v.svg"
+<figcaption>利用贝尔曼方程消去 Q_π 后，Actor-Critic 只需训练状态价值网络 V_ϕ(s)，即可算出优势并完成三步迭代闭环。</figcaption>
+</figure>
+
+在网络结构设计上（尤其是放到大模型场景中），价值网络 $V_\phi(s_t)$ 通常有两种搭法：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-arch.svg"
+<figcaption>Critic 价值网络的两种常见结构：独立价值网络（左）与共享策略主干外接线性价值头（右）。</figcaption>
+</figure>
+
+- **独立价值网络（Separate Value Network）**：Critic 拥有一套完全独立的骨干网络与输出层，价值损失训练整套参数 $\phi$。优点是价值梯度不会干扰策略网络的表征，训练更稳（如 InstructGPT / 标准 RLHF PPO）；缺点是必须额外维护一整个与策略同规模的模型做 Critic，显存与算力开销几乎翻倍（这也正是后面 GRPO 设法去掉 Critic 的核心动因）。
+- **共享策略主干 + 价值头（Value Head on Policy Body）**：直接复用策略网络 $\pi_\theta$ 的主干隐藏表示，只在顶层加一个轻量级的线性价值头 $\phi$，并通常用 `stop-gradient` 截断回传到主干的价值梯度，仅更新线性头 $\phi$（如 MIXER）。这种做法显存开销极小，但 Critic 的拟合能力会受限于策略主干已有的特征。
+
+### 如何利用收集的数据拟合 $V_\pi(s)$
+
+接下来的问题是：拿到策略 $\pi_\theta$ 交互采集的一批轨迹 $\{\tau^{(i)}\}_{i=1}^N$ 后，具体怎么训练参数 $\phi$ 让 $V_\phi(s_t)$ 逼近真实的 $V_\pi(s_t)$？
+
+做法很直接——把它转化为标准的**监督回归问题**：给每个采样状态 $s_t^{(i)}$ 构造一个目标标签 $y_t^{(i)}$（将 $y_t^{(i)}$ 视为固定常数，不回传梯度），最小化均方误差损失 $\mathcal{L}(\phi) = \frac{1}{2}\sum_{i=1}^{N}\sum_{t=0}^{T-1}\big(V_\phi(s_t^{(i)}) - y_t^{(i)}\big)^2$。围绕如何构造回归标签 $y_t^{(i)}$，同样对应蒙特卡洛（MC）和时序差分（TD）两条路线：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-mc-vs-td.svg"
+<figcaption>拟合价值网络 V_ϕ(s) 的两种回归目标对比：上方为 MC 目标（借助连续网络在红圈相近状态间的泛化隐式平滑样本），中间为复用旧价值网络的 TD 自举目标，下方为统一的均方误差回归损失。</figcaption>
+</figure>
+
+1. **蒙特卡洛回归目标（MC target）**：直接把单条轨迹跑完后的真实未来折扣回报作为标签 $y_t^{(i)} = G_t^{(i)} = \sum_{t'=t}^{T-1} \gamma^{t'-t} R(s_{t'}^{(i)}, a_{t'}^{(i)})$。在连续或大状态空间中，不同轨迹几乎不会经过完全相同的状态 $s_t$，没法对同一个状态重采 $N$ 次先求均值 $\frac{1}{N}\sum_{i=1}^N G_t^{(i)}$ 再拿去回归。但单次回报当标签依然能训出不错的效果：如上图右上所示，当多条轨迹穿过红圈内彼此相近的状态时，**同一个连续函数 $V_\phi(s)$ 必须同时拟合这些相近状态上的多个样本**，最小二乘回归会自动把预测值拉向局部条件期望，在相近状态之间隐式起到了平滑平均的作用。不过当序列很长时，单条 $G_t^{(i)}$ 累加的噪声依然很大。
+2. **时序差分自举目标（Bootstrapped / TD target）**：理想标签本是期望 $\mathbb{E}_\pi[G_t \mid s_t^{(i)}] \approx R(s_t^{(i)}, a_t^{(i)}) + \gamma V_\pi(s_{t+1}^{(i)})$。与其把整条长轨迹的随机奖励一路加到底，不如只采当前一步真实奖励，后续直接复用上一轮已经拟合好的价值网络 $V_\phi(s_{t+1}^{(i)})$ 来替代未知的 $V_\pi(s_{t+1}^{(i)})$，构造**自举（bootstrapped）**标签 $y_t^{(i)} = R(s_t^{(i)}, a_t^{(i)}) + \gamma V_\phi(s_{t+1}^{(i)})$。标签里不再累加后续整段轨迹的随机性，方差大幅降低，代价是在 $V_\phi$ 尚未学准时会带入偏差。
+
+### MC 与 TD 估计优势的对比与广义优势估计（GAE）
+
+拟合出 $V_\phi(s)$ 之后，回到策略梯度真正需要的优势项 $A_\pi(s_t, a_t) = Q_\pi(s_t, a_t) - V_\pi(s_t)$。同样取决于前一项 $Q_\pi(s_t, a_t)$ 用整条采样回报还是单步贝尔曼展开来近似，估计优势也有 MC 和一步 TD 两种基本做法：
 
 $$
-\hat{A}_t = \underbrace{R(s_t, a_t) + \gamma V_\phi(s_{t+1})}_{\approx\, Q_{\pi_\theta}(s_t, a_t)} - V_\phi(s_t) = \delta_t
+\hat{A}_t^{\text{MC}} = G_t - V_\phi(s_t) = \sum_{t'=t}^{T-1} \gamma^{t'-t} R(s_{t'}, a_{t'}) - V_\phi(s_t), \qquad \hat{A}_t^{\text{TD}} = R(s_t, a_t) + \gamma V_\phi(s_{t+1}) - V_\phi(s_t) = \delta_t
 $$
 
-这个式子正好就是前面时序差分一节里的 TD error $\delta_t$。它只保留了当前一步转移的随机性，把 $s_{t+1}$ 之后整片未来分支的随机性都用确定性的函数值 $V_\phi(s_{t+1})$ 替代了，所以方差极低，而且每走一步就能在线计算，不必等整条轨迹结束。
+一步 TD 优势估计恰好就是前文的 TD error $\delta_t$。对比这两种优势估计，核心差异体现在三个方面：
 
-当然，如果 Critic $V_\phi$ 还没学准，只看一步的 $\delta_t$ 会引入偏差；反过来一直展开到轨迹末尾的 MC 估计 $\hat{A}_t^{\text{MC}} = G_t - V_\phi(s_t) = \sum_{l=0}^{T-t-1} \gamma^l \delta_{t+l}$ 无偏但方差大。实际训练（如 PPO）普遍采用广义优势估计 GAE（Generalized Advantage Estimation），引入 $\lambda \in [0, 1]$ 对未来各步的 TD error 做指数加权平均：
+- **偏差（Bias）**：**MC 优势严格无偏，而 TD 优势有偏**。在 $\hat{A}_t^{\text{MC}}$ 中，$G_t$ 是真实采样回报，减去的 $V_\phi(s_t)$ 只依赖当前状态 $s_t$（与当前动作 $a_t$ 无关，前文已证状态基线在策略梯度中的期望恒为 $0$），因此**哪怕 Critic $V_\phi$ 没拟合准，MC 优势给出的策略梯度依然无偏**。而在 $\hat{A}_t^{\text{TD}}$ 中，$V_\phi(s_{t+1})$ 依赖动作 $a_t$ 转移出的下一状态 $s_{t+1}$，期望不再消去；一旦 $V_\phi$ 存在误差，就会直接把偏差传给策略梯度。
+- **方差（Variance）**：**MC 优势高方差，而 TD 优势低方差**。$\hat{A}_t^{\text{MC}}$ 累加了从 $t$ 到 $T-1$ 所有后续动作和状态转移的随机性，轨迹越长抖动越剧烈；$\hat{A}_t^{\text{TD}}$ 把 $s_{t+1}$ 之后整片扇面的随机分支都折叠成了确定性的网络预测 $V_\phi(s_{t+1})$，只剩单步随机性，梯度稳定得多。
+- **轨迹采样要求**：MC 必须等整条轨迹走到终点才能回算 $G_t$；TD 只依赖单步转移 $(s_t, a_t, R(s_t,a_t), s_{t+1})$，支持截断长序列（truncated rollout）在线计算。
+
+只看一步偏差太大，一路看到底方差又太高，最自然的折中就是往后看 $k$ 步真实奖励再接上 $\gamma^k V_\phi(s_{t+k})$ 自举。简记 $R_t = R(s_t, a_t)$，利用 $\delta_{t+l} = R_{t+l} + \gamma V_\phi(s_{t+l+1}) - V_\phi(s_{t+l})$ 逐项展开错位相消，会发现任意 $k$ 步优势估计都能统一写成未来 TD error 的折扣和：
+
+$$
+\begin{aligned}
+\hat{A}_t^{(1)} &= R_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t) = \delta_t \\
+\hat{A}_t^{(2)} &= R_t + \gamma R_{t+1} + \gamma^2 V_\phi(s_{t+2}) - V_\phi(s_t) = \delta_t + \gamma\delta_{t+1} \\
+\hat{A}_t^{(k)} &= \sum_{l=0}^{k-1} \gamma^l R_{t+l} + \gamma^k V_\phi(s_{t+k}) - V_\phi(s_t) = \sum_{l=0}^{k-1} \gamma^l \delta_{t+l}
+\end{aligned}
+$$
+
+当展开到轨迹末尾 $T$（约定终止状态价值 $V_\phi(s_T)=0$）时，中间所有 $V_\phi$ 全部抵消，$\hat{A}_t^{(T-t)} = \sum_{l=0}^{T-t-1}\gamma^l \delta_{t+l} = G_t - V_\phi(s_t)$ 正好还原回 MC 优势。
+
+与其生硬地固定某一个步数 $k$，**广义优势估计（Generalized Advantage Estimation, GAE）**引入权衡因子 $\lambda \in [0, 1]$，对所有 $k=1, 2, \dots$ 的多步优势按权重 $(1-\lambda)\lambda^{k-1}$ 做指数加权平均，化简后等价于直接对未来每一步的 TD error 乘上 $(\gamma\lambda)^l$ 求和：
 
 $$
 \hat{A}_t^{\text{GAE}(\gamma,\lambda)} = \sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}
 $$
 
-$\lambda = 0$ 时退化为一步 TD 优势 $\delta_t$（低方差、有偏），$\lambda = 1$ 时退化为 MC 优势 $G_t - V_\phi(s_t)$（无偏、高方差）；实践中常取 $\lambda \approx 0.95$ 在偏差与方差之间折中，实现时只需从轨迹末尾往前按 $\hat{A}_t = \delta_t + \gamma\lambda \hat{A}_{t+1}$ 递推一遍即可算出。Critic 网络则通过最小化均方误差 $\mathcal{L}(\phi) = \frac{1}{2}\big(V_\phi(s_t) - \hat{V}_t^{\text{target}}\big)^2$（目标值常取 $\hat{V}_t^{\text{target}} = \hat{A}_t^{\text{GAE}} + V_{\phi_{\text{old}}}(s_t)$）不断提升价值估计精度。
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-gae.svg"
+<figcaption>广义优势估计 GAE(γ, λ) 图解：上方为多步优势按 (1−λ)λ^{k−1} 指数加权的展开结构，中间对比两个控制变量 λ 与 γ 的职责差异，下方为 λ 从 0（一步 TD）到 1（MC）的连续过渡光谱。</figcaption>
+</figure>
+
+初学者看到外层的 $(\gamma\lambda)^l$ 很容易疑惑：既然 $\gamma$ 和 $\lambda$ 乘在一起都在衰减远期项，为什么还需要两个独立的控制变量？关键在于 $\delta_{t+l} = R_{t+l} + \gamma V_\phi(s_{t+l+1}) - V_\phi(s_{t+l})$ **内部只含 $\gamma$ 而不含 $\lambda$**，两者的职责完全不同：
+
+- **$\lambda \in [0, 1]$ 控制“怎么估计优势”（自举与采样的权衡旋钮）**：$\lambda$ 只出现在外层多步混合权重中，不改变回报和价值函数本身的定义。如果 Critic 已经完全学准（$V_\phi = V_\pi$），那么对**任意** $\lambda \in [0, 1]$，GAE 都是严格无偏的；当 $V_\phi$ 存在误差时，调节 $\lambda$ 就是在 $\lambda = 0$（一步 TD $\delta_t$，完全信 $V_\phi$ 自举，方差最低但偏差最大）与 $\lambda = 1$（MC 优势 $G_t - V_\phi(s_t)$，完全信真实采样，严格无偏但方差最高）之间平滑折中。
+- **$\gamma \in [0, 1]$ 控制“优化什么目标”（未来奖励的视野尺度旋钮）**：$\gamma$ 同时出现在外层衰减和内层 $\delta_{t+l}$ 的 $\gamma V_\phi(s_{t+l+1})$ 中，直接决定了价值函数向后看多远的未来奖励（有效视野约为 $\frac{1}{1-\gamma}$ 步）。**哪怕 $V_\phi = V_\pi$ 毫无误差**，相对于无折扣真实目标而言，调小 $\gamma$ 也会压低远期奖励的权重（使策略变短视）而引入偏差，换来远期方差的下降（例如在只有句末奖励的 LLM 任务中通常设 $\gamma = 1$，主要靠 $\lambda < 1$ 控制方差）。
+
+实践中（如 PPO）通常取 $\lambda \approx 0.95$，让近期步多信真实奖励以压低偏差、远期步多靠 $V_\phi$ 截断噪声。代码实现时只需从轨迹末尾往前按 $\hat{A}_t^{\text{GAE}} = \delta_t + \gamma\lambda\,\hat{A}_{t+1}^{\text{GAE}}$ 做一趟 $O(T)$ 逆序递推即可算出所有步的优势，同时还可以直接取 $y_t = \hat{A}_t^{\text{GAE}} + V_{\phi_{\text{old}}}(s_t)$ 作为回训 Critic $V_\phi$ 的回归目标。
 
 ## 信任域方法：TRPO 与 PPO
 
