@@ -1,5 +1,5 @@
 ---
-title: 强化学习基础之从零到GRPO
+title: 强化学习基础之从随机变量到GRPO
 description: 从 MDP、价值函数与贝尔曼方程出发，梳理动态规划、蒙特卡洛、时序差分、策略梯度到 Actor-Critic 与 PPO 的强化学习基础理论。
 date: 2026-11-06
 authors:
@@ -20,7 +20,7 @@ tags:
   - PPO
 ---
 
-# 强化学习基础理论
+# 强化学习基础之从随机变量到GRPO
 
 <!-- 在这里填写文章摘要，摘要将显示在 Blog 列表中。 -->
 
@@ -306,21 +306,26 @@ $$
 - $t$ 时刻之前拿到的奖励和当前动作 $a_t$ 无关，却也算进了它的权重
 - 权重直接取决于 $G(\tau)$ 的绝对值，如果奖励恒为正数，差动作乘上正回报依然像 SFT 一样被推高概率，只是推高得少一点
 
-方差过大会让每次估计出的梯度方向剧烈抖动：学习率大了，一批坏样本就可能把策略推崩，变差的策略又采出更差的数据；学习率小了，收敛又极慢。在不引入偏差的前提下，通常分两步改进：
+方差过大会让每次估计出的梯度方向剧烈抖动：学习率大了，一批坏样本就可能把策略推崩，变差的策略又采出更差的数据；学习率小了，收敛又极慢。既然在线交互没法靠无限增大采样数 $N$ 来暴力平摊噪声，**降低方差的目的就是只用少量样本也能得到稳定的梯度估计**。在不引入偏差的前提下，通常分两步改进：
 
-一是利用因果性（reward-to-go）。$a_t$ 影响不了过去的奖励，所以把权重从整条轨迹总回报 $G(\tau)$ 收紧为 $t$ 之后的未来回报 $G_t = \sum_{k=t}^{T-1} R(s_k, a_k)$。
+1. **利用因果性（reward-to-go）**：改之前外层的 $G(\tau)$ 乘进求和号，相当于每一步动作都乘同一个整条轨迹总分 $G(\tau)$；而当前动作 $a_t$ 影响不了过去的奖励，去掉 $k < t$ 的无关历史项后，第 $t$ 步就只加权从 $t$ 往后的未来回报 $G_t = \sum_{k=t}^{T-1} R(s_k, a_k)$（权重随 $t$ 变化，写进求和号内）：
 
-二是减去一个只和状态有关的 baseline $b(s_t)$，把权重改成 $G_t - b(s_t)$ 来消除奖励整体偏移带来的波动。这样做不改变梯度的期望，因为：
+    $$
+    \sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\cdot G(\tau) \;\longrightarrow\; \sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\cdot G_t
+    $$
 
-$$
-\mathbb{E}_{a_t\sim\pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\big] = b(s_t)\,\nabla_\theta \sum_{a_t}\pi_\theta(a_t\mid s_t) = b(s_t)\,\nabla_\theta 1 = 0
-$$
+    （注：若在单轮 LLM 中只有句末 `<eos>` 给一个结果分、中间步奖励全为 $0$ 且 $\gamma=1$，那每个位置往后加出的 $G_t$ 仍等于同一个句末总分；一旦有多轮工具交互奖励、过程奖励 PRM 或 $\gamma < 1$，每一步的 $G_t$ 就各不相同了。）
+2. **减去状态基线 $b(s_t)$**：把权重改成 $G_t - b(s_t)$ 来消除奖励整体偏移带来的波动。这样做不改变梯度的期望，因为
 
-最自然的选择是 $b(s_t) = V_{\pi_\theta}(s_t)$。又因为 $\mathbb{E}[G_t\mid s_t,a_t] = Q_{\pi_\theta}(s_t,a_t)$，权重在期望上正好变成前面定义的优势函数 $A_{\pi_\theta}(s_t,a_t) = Q_{\pi_\theta}(s_t,a_t) - V_{\pi_\theta}(s_t)$：
+    $$
+    \mathbb{E}_{a_t\sim\pi_\theta}\big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\big] = b(s_t)\,\nabla_\theta \sum_{a_t}\pi_\theta(a_t\mid s_t) = b(s_t)\,\nabla_\theta 1 = 0
+    $$
 
-$$
-\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A_{\pi_\theta}(s_t, a_t)\right]
-$$
+    最自然的选择是取 $b(s_t) = V_{\pi_\theta}(s_t)$。结合 $\mathbb{E}[G_t\mid s_t,a_t] = Q_{\pi_\theta}(s_t,a_t)$，权重在期望上正好变成前面定义的优势函数 $A_{\pi_\theta}(s_t,a_t) = Q_{\pi_\theta}(s_t,a_t) - V_{\pi_\theta}(s_t)$：
+
+    $$
+    \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A_{\pi_\theta}(s_t, a_t)\right]
+    $$
 
 此时比平均水平好的动作（$A>0$）提高概率，比平均水平差的（$A<0$）降低概率。
 
@@ -349,6 +354,40 @@ $$
 有了 $J^{\text{IS}}(\theta)$，同一批 $\pi_{\theta_{\text{old}}}$ 采出的数据就能反复做多步梯度更新。顺着上面两个方向往下走，还剩最后两个关键拼图：一是优势函数 $A$ 如果仍用 MC 回报 $G_t$ 来算，长轨迹下方差还是偏大，下一节的 Actor-Critic 用 TD 学一个价值网络来低方差估计它；二是多步更新一旦让 $\pi_\theta$ 偏离 $\pi_{\theta_{\text{old}}}$ 太远，重要性权重就会剧烈失控导致策略崩溃，后面的 TRPO 和 PPO 就是通过限制每次更新的幅度来解决这一点的。
 
 ## Actor-Critic
+
+### 从单次随机采样到价值函数拟合
+
+回到上一节带 baseline 的策略梯度：在实际采样出一条轨迹后，如果还像 REINFORCE 那样用单条轨迹算出的 $G_t^{(i)} - V(s_t^{(i)})$ 当作优势估计，方差其实依然很大。从随机变量的视角看原因很直接——从 $(s_t, a_t)$ 往后走，由于策略采样和环境转移都是随机的，未来会展开成一整片扇形的可能轨迹，未来回报 $G_t$（以及基于单样本算出的优势）本身是一个随机变量。REINFORCE 每次只沿着实际发生的那一条分支把奖励加起来，碰上运气好或运气差的分支，数值就会剧烈跳动。
+
+我们真正需要的不是单条分支的随机样本 $G_t^{(i)}$，而是它在整片未来分支扇面上的真实期望 $Q_{\pi_\theta}(s_t, a_t) = \mathbb{E}_{\pi_\theta}[G_t \mid s_t, a_t]$，进而得到确定性的优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-q-estimate.svg"
+<figcaption>REINFORCE 只沿单条采样分支（红线）累加回报，而 Actor-Critic 用价值函数拟合整片扇面的期望价值，从而给出低方差的优势估计。</figcaption>
+</figure>
+
+Actor-Critic 的本质就是专门引入一个参数化的价值网络（Critic）去拟合期望价值，用来更准、更低方差地估计 $A_{\pi_\theta}(s_t, a_t)$，把前面两条主线（Value-based 的 TD 价值估计与 Policy-based 的策略梯度）结合起来：
+
+- **Actor（策略网络 $\pi_\theta(a\mid s)$）**：负责与环境交互选动作，并按 Critic 给出的优势估计 $\hat{A}_t$ 更新策略参数 $\theta$
+- **Critic（价值网络 $V_\phi(s)$）**：负责评估状态好坏，通过回归损失最小化价值预测误差来更新参数 $\phi$
+
+### 用单网络 $V_\phi$ 估计优势与 GAE
+
+表面上看算 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$ 似乎要同时学 $Q$ 和 $V$ 两个网络，实际上只学一个状态价值网络 $V_\phi(s)$ 就够了。利用贝尔曼期望关系 $Q_{\pi_\theta}(s_t, a_t) = \mathbb{E}[R(s_t, a_t) + \gamma V_{\pi_\theta}(s_{t+1}) \mid s_t, a_t]$，拿交互采到的真实一步奖励加上下一状态的价值估计做 bootstrapping，就能直接得到一步优势估计：
+
+$$
+\hat{A}_t = \underbrace{R(s_t, a_t) + \gamma V_\phi(s_{t+1})}_{\approx\, Q_{\pi_\theta}(s_t, a_t)} - V_\phi(s_t) = \delta_t
+$$
+
+这个式子正好就是前面时序差分一节里的 TD error $\delta_t$。它只保留了当前一步转移的随机性，把 $s_{t+1}$ 之后整片未来分支的随机性都用确定性的函数值 $V_\phi(s_{t+1})$ 替代了，所以方差极低，而且每走一步就能在线计算，不必等整条轨迹结束。
+
+当然，如果 Critic $V_\phi$ 还没学准，只看一步的 $\delta_t$ 会引入偏差；反过来一直展开到轨迹末尾的 MC 估计 $\hat{A}_t^{\text{MC}} = G_t - V_\phi(s_t) = \sum_{l=0}^{T-t-1} \gamma^l \delta_{t+l}$ 无偏但方差大。实际训练（如 PPO）普遍采用广义优势估计 GAE（Generalized Advantage Estimation），引入 $\lambda \in [0, 1]$ 对未来各步的 TD error 做指数加权平均：
+
+$$
+\hat{A}_t^{\text{GAE}(\gamma,\lambda)} = \sum_{l=0}^{T-t-1} (\gamma\lambda)^l \delta_{t+l}
+$$
+
+$\lambda = 0$ 时退化为一步 TD 优势 $\delta_t$（低方差、有偏），$\lambda = 1$ 时退化为 MC 优势 $G_t - V_\phi(s_t)$（无偏、高方差）；实践中常取 $\lambda \approx 0.95$ 在偏差与方差之间折中，实现时只需从轨迹末尾往前按 $\hat{A}_t = \delta_t + \gamma\lambda \hat{A}_{t+1}$ 递推一遍即可算出。Critic 网络则通过最小化均方误差 $\mathcal{L}(\phi) = \frac{1}{2}\big(V_\phi(s_t) - \hat{V}_t^{\text{target}}\big)^2$（目标值常取 $\hat{V}_t^{\text{target}} = \hat{A}_t^{\text{GAE}} + V_{\phi_{\text{old}}}(s_t)$）不断提升价值估计精度。
 
 ## 信任域方法：TRPO 与 PPO
 
