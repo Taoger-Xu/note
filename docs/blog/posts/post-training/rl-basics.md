@@ -280,7 +280,14 @@ $$
 <figcaption>REINFORCE 策略梯度与 SFT 最大似然梯度对比：唯一区别是右侧多乘了轨迹总回报权重。</figcaption>
 </figure>
 
-两式的唯一区别就是后面多乘了一个轨迹总回报 $G(\tau^{(i)}) = \sum_{t=0}^{T-1} R(s_t^{(i)}, a_t^{(i)})$。普通 SFT 的数据来自现成的专家示范，默认每条样本都是对的（权重恒为 $+1$），无差别推高轨迹上每一步动作的对数概率；而 REINFORCE 没有标准答案，数据靠模型自己采样试错（trial-and-error），本质上就是按回报加权的 SFT：高回报轨迹推高概率，负回报轨迹反向压低概率。放到自回归 LLM 上，把上下文 $(x, y_{<t})$ 看作状态 $s_t$、第 $t$ 个 token $y_t$ 看作动作 $a_t$，对输出 logits 做一次 `log_softmax` 就拿到 $\log \pi_\theta(a_t\mid s_t)$，训练目标就是给逐 token 的交叉熵 loss 乘上回报权重。
+两式的唯一区别就是后面多乘了一个轨迹总回报 $G(\tau^{(i)}) = \sum_{t=0}^{T-1} R(s_t^{(i)}, a_t^{(i)})$。普通 SFT 的数据来自现成的专家示范，默认每条样本都是对的（权重恒为 $+1$），无差别推高轨迹上每一步动作的对数概率；而 REINFORCE 没有标准答案，数据靠模型自己采样试错（trial-and-error），本质上就是按回报加权的 SFT：高回报轨迹推高概率，负回报轨迹反向压低概率。
+
+把这个式子落到自回归 LLM 上，左边的对数似然梯度求和与右边的累积奖励求和各自有着非常具体的对应关系：
+
+<figure class="rl-roadmap-figure">
+--8<-- "docs/blog/posts/post-training/assets/rl-basics/pg-llm-mapping.svg"
+<figcaption>策略梯度在自回归 LLM 中的逐项对应：左项是生成回答的逐 token 对数似然梯度（同 SFT 交叉熵），右项是句末由 Reward Model 或验证器算出的整条回答回报权重。</figcaption>
+</figure>
 
 ### 高级策略梯度
 

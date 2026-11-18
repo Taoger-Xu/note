@@ -1,0 +1,44 @@
+<svg class="rl-roadmap" viewBox="0 0 720 572" role="img" aria-label="策略梯度公式在自回归 LLM 中的逐项拆解：左栏解析 ∑_t ∇_θ log π_θ(a_t|s_t) 对应逐 token 对数似然梯度，右栏解析 ∑_t R(s_t,a_t) 对应句末 Reward Model 或验证器给出的总回报权重。">
+<defs><marker id="pgllm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="18" y="14" width="684" height="106" rx="14"/>
+<rect x="218" y="24" width="248" height="84" rx="9" fill="var(--rl-value)" fill-opacity="0.08" stroke="var(--rl-value)" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="5 3"/>
+<rect x="484" y="24" width="178" height="84" rx="9" fill="var(--rl-green)" fill-opacity="0.08" stroke="var(--rl-green)" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="5 3"/>
+<text class="rl-math" x="142" y="72" text-anchor="end">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) ≈</text>
+<text class="rl-math-sm" x="160" y="59" text-anchor="middle">1</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 148 66 H 172"/>
+<text class="rl-math-sm" x="160" y="83" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="192.0" y="74.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="192.0" y="90.0" text-anchor="middle"><tspan font-style="italic">i</tspan>=1</text>
+<text class="rl-math-sm" x="192.0" y="50.0" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 232.5 38.0 Q 223.5 68.0 232.5 98.0"/>
+<text class="rl-math-op" x="248.0" y="74.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="248.0" y="90.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=1</text>
+<text class="rl-math-sm" x="248.0" y="50.0" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+<text class="rl-math" x="268" y="72" text-anchor="start">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan> log <tspan font-style="italic">π</tspan><tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 449.5 38.0 Q 458.5 68.0 449.5 98.0"/>
+<text class="rl-math" x="475" y="72" text-anchor="middle">·</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 498.5 38.0 Q 489.5 68.0 498.5 98.0"/>
+<text class="rl-math-op" x="514.0" y="74.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="514.0" y="90.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=1</text>
+<text class="rl-math-sm" x="514.0" y="50.0" text-anchor="middle"><tspan font-style="italic">T</tspan></text>
+<text class="rl-math" x="534" y="72" text-anchor="start"><tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>)</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 645.5 38.0 Q 654.5 68.0 645.5 98.0"/>
+<path class="rl-edge" d="M 342 108 L 184 142" marker-end="url(#pgllm-arrow)"/>
+<path class="rl-edge" d="M 573 108 L 536 142" marker-end="url(#pgllm-arrow)"/>
+<rect class="rl-band" x="18" y="144" width="332" height="360" rx="14"/>
+<text class="rl-lane-label rl-value" x="184" y="172" text-anchor="middle">第一项：生成回答的对数似然梯度</text>
+<path class="rl-edge" d="M 184 276 V 296" marker-end="url(#pgllm-arrow)"/>
+<path class="rl-edge" d="M 184 384 V 404" marker-end="url(#pgllm-arrow)"/>
+<g class="rl-node rl-value"><rect x="34" y="188" width="300" height="88" rx="10"/><text class="rl-title" x="184" y="214" text-anchor="middle">状态 s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> 与动作 a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> 代表什么</text><text class="rl-sub" x="184" y="238" text-anchor="middle">s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> = (x, y<tspan dy="3.5" font-size="13">&lt;t</tspan><tspan dy="-3.5">​</tspan>)：Prompt + 已生成前缀</text><text class="rl-sub" x="184" y="260" text-anchor="middle">a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> = y<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>：第 t 步从词表采样的 token</text></g>
+<g class="rl-node rl-value"><rect x="34" y="296" width="300" height="88" rx="10"/><text class="rl-title" x="184" y="322" text-anchor="middle">单步 log π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> | s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>) 怎么算</text><text class="rl-sub" x="184" y="346" text-anchor="middle">LLM 输出词表 logits → 做 log_softmax</text><text class="rl-sub" x="184" y="368" text-anchor="middle">取负号即为 SFT 单 token 交叉熵 loss</text></g>
+<g class="rl-node rl-value"><rect x="34" y="404" width="300" height="88" rx="10"/><text class="rl-title" x="184" y="430" text-anchor="middle">对 t 求和 ∑<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> log π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> 代表什么</text><text class="rl-sub" x="184" y="454" text-anchor="middle">链式法则下等于整条回答 log π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>(y | x) 梯度</text><text class="rl-sub" x="184" y="476" text-anchor="middle">给出“推高该条回答生成概率”的梯度方向</text></g>
+<rect class="rl-band" x="370" y="144" width="332" height="360" rx="14"/>
+<text class="rl-lane-label rl-green" x="536" y="172" text-anchor="middle">第二项：整条回答的 Reward 权重</text>
+<path class="rl-edge" d="M 536 276 V 296" marker-end="url(#pgllm-arrow)"/>
+<path class="rl-edge" d="M 536 384 V 404" marker-end="url(#pgllm-arrow)"/>
+<g class="rl-node rl-green"><rect x="386" y="188" width="300" height="88" rx="10"/><text class="rl-title" x="536" y="214" text-anchor="middle">单步 R(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>, a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>) 代表什么</text><text class="rl-sub" x="536" y="238" text-anchor="middle">中间生成步（t &lt; T）通常 r<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> = 0（稀疏）</text><text class="rl-sub" x="536" y="260" text-anchor="middle">生成 &lt;eos&gt; 结束时才给出句末奖励 r<tspan dy="3.5" font-size="13">T</tspan><tspan dy="-3.5">​</tspan></text></g>
+<g class="rl-node rl-green"><rect x="386" y="296" width="300" height="88" rx="10"/><text class="rl-title" x="536" y="322" text-anchor="middle">Reward 具体怎么算出来</text><text class="rl-sub" x="536" y="346" text-anchor="middle">偏好对齐：Reward Model 对 (x, y) 打分</text><text class="rl-sub" x="536" y="368" text-anchor="middle">推理任务：规则验证器判题（对 +1 / 错 −1）</text></g>
+<g class="rl-node rl-green"><rect x="386" y="404" width="300" height="88" rx="10"/><text class="rl-title" x="536" y="430" text-anchor="middle">对 t 求和 ∑<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan> R 代表什么</text><text class="rl-sub" x="536" y="454" text-anchor="middle">求和结果即整条回答总回报 G(τ) = R(x, y)</text><text class="rl-sub" x="536" y="476" text-anchor="middle">控制左侧梯度的缩放幅度与正推 / 反压方向</text></g>
+<rect class="rl-callout" x="18" y="518" width="684" height="40" rx="10"/>
+<text class="rl-lane-label rl-policy" x="360" y="543" text-anchor="middle">两项相乘 = 逐 token SFT 梯度方向 × 回答级 Reward 权重（G &gt; 0 推高整条回答，G &lt; 0 压低）</text>
+</svg>
