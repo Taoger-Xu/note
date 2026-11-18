@@ -12,9 +12,9 @@
 <path class="rl-edge" d="M 280 182 L 182 204" marker-end="url(#pgr-arrow)"/>
 <path class="rl-edge" d="M 440 182 L 538 204" marker-end="url(#pgr-arrow)"/>
 <rect class="rl-band" x="18" y="206" width="328" height="306" rx="14"/>
-<text class="rl-lane-label rl-policy" x="182" y="236" text-anchor="middle">痛点一：梯度高方差 · High Variance</text>
+<text class="rl-lane-label rl-policy" x="182" y="236" text-anchor="middle">方向一：缓解梯度不稳定 · 降方差</text>
 <rect class="rl-band" x="374" y="206" width="328" height="306" rx="14"/>
-<text class="rl-lane-label rl-value" x="538" y="236" text-anchor="middle">痛点二：样本仅用一次 · On-Policy</text>
+<text class="rl-lane-label rl-value" x="538" y="236" text-anchor="middle">方向二：提升学习效率 · Off-Policy</text>
 <path class="rl-edge" d="M 182 316 V 364" marker-end="url(#pgr-arrow)"/>
 <text class="rl-edge-label" x="194" y="345" text-anchor="start">减去基线 b(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>) = V(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>)</text>
 <path class="rl-edge" d="M 182 428 V 456" marker-end="url(#pgr-arrow)"/>
