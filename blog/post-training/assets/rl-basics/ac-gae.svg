@@ -1,0 +1,78 @@
+<svg class="rl-roadmap" viewBox="0 0 720 636" role="img" aria-label="广义优势估计 GAE(γ, λ) 图解：上方展示 k 步优势估计按 (1−λ)λ^{k−1} 指数加权化为 ∑(γλ)^l δ_{t+l}；中间对比两个控制变量 λ（自举与采样的估计器权衡）与 γ（远期奖励视野尺度）；下方展示 λ 从 0（一步 TD）到 1（MC）的连续光谱。">
+<defs>
+<marker id="acgae-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker>
+<marker id="acgae-arrow-rev" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="rl-arrowhead" d="M9 1 L0 5 L9 9 Z"/></marker>
+</defs>
+<rect class="rl-band" x="16" y="14" width="688" height="254" rx="14"/>
+<text class="rl-lane-label rl-green" x="32" y="40" text-anchor="start">GAE 结构拆解：对不同步数 <tspan font-style="italic">k</tspan> 的真实奖励 + <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> 自举做指数加权平均</text>
+<text class="rl-math-sm" x="138" y="64" text-anchor="start"><tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan></text>
+<text class="rl-math-sm" x="212" y="64" text-anchor="start"><tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+1</tspan><tspan dy="-3.5">​</tspan></text>
+<text class="rl-math-sm" x="294" y="64" text-anchor="start"><tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+2</tspan><tspan dy="-3.5">​</tspan></text>
+<text class="rl-math-sm" x="376" y="64" text-anchor="start"><tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+3</tspan><tspan dy="-3.5">​</tspan></text>
+<text class="rl-math-sm" x="456" y="64" text-anchor="start">… <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">T</tspan><tspan dy="-3.5">​</tspan></text>
+<g stroke="currentColor" stroke-opacity="0.12" stroke-width="1" stroke-dasharray="3 3">
+<line x1="138" y1="70" x2="138" y2="196"/>
+<line x1="220" y1="70" x2="220" y2="196"/>
+<line x1="302" y1="70" x2="302" y2="196"/>
+<line x1="384" y1="70" x2="384" y2="196"/>
+<line x1="466" y1="70" x2="466" y2="196"/>
+</g>
+<text class="rl-math-sm" x="32" y="96" text-anchor="start">1-step <tspan font-style="italic">Â</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(1)</tspan><tspan dy="5.5">​</tspan></text>
+<line x1="138" y1="92" x2="220" y2="92" stroke="var(--rl-policy)" stroke-width="3.2" stroke-linecap="round"/>
+<circle cx="138" cy="92" r="4.5" fill="var(--md-default-bg-color)" stroke="var(--rl-policy)" stroke-width="1.8"/>
+<circle cx="220" cy="92" r="5.5" fill="var(--rl-value)"/>
+<text class="rl-math-sm" x="230" y="96" text-anchor="start" fill="var(--rl-value)">+ <tspan font-style="italic">γ</tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+1</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-math-sm" x="536" y="96" text-anchor="start">× (1 − <tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan>)</text>
+<text class="rl-math-sm" x="32" y="128" text-anchor="start">2-step <tspan font-style="italic">Â</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(2)</tspan><tspan dy="5.5">​</tspan></text>
+<line x1="138" y1="124" x2="302" y2="124" stroke="var(--rl-policy)" stroke-width="3.2" stroke-linecap="round"/>
+<circle cx="138" cy="124" r="4.5" fill="var(--md-default-bg-color)" stroke="var(--rl-policy)" stroke-width="1.8"/>
+<circle cx="220" cy="124" r="3.5" fill="var(--rl-policy)"/>
+<circle cx="302" cy="124" r="5.5" fill="var(--rl-value)"/>
+<text class="rl-math-sm" x="312" y="128" text-anchor="start" fill="var(--rl-value)">+ <tspan font-style="italic">γ</tspan><tspan dy="-5.5" font-size="13">2</tspan><tspan dy="5.5">​</tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+2</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-math-sm" x="536" y="128" text-anchor="start">× (1 − <tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan>)<tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan></text>
+<text class="rl-math-sm" x="32" y="160" text-anchor="start">3-step <tspan font-style="italic">Â</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(3)</tspan><tspan dy="5.5">​</tspan></text>
+<line x1="138" y1="156" x2="384" y2="156" stroke="var(--rl-policy)" stroke-width="3.2" stroke-linecap="round"/>
+<circle cx="138" cy="156" r="4.5" fill="var(--md-default-bg-color)" stroke="var(--rl-policy)" stroke-width="1.8"/>
+<circle cx="220" cy="156" r="3.5" fill="var(--rl-policy)"/>
+<circle cx="302" cy="156" r="3.5" fill="var(--rl-policy)"/>
+<circle cx="384" cy="156" r="5.5" fill="var(--rl-value)"/>
+<text class="rl-math-sm" x="394" y="160" text-anchor="start" fill="var(--rl-value)">+ <tspan font-style="italic">γ</tspan><tspan dy="-5.5" font-size="13">3</tspan><tspan dy="5.5">​</tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+3</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-math-sm" x="536" y="160" text-anchor="start">× (1 − <tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan>)<tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan><tspan dy="-5.5" font-size="13">2</tspan><tspan dy="5.5">​</tspan></text>
+<text class="rl-math-sm" x="32" y="192" text-anchor="start">MC <tspan font-style="italic">Â</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(T−t)</tspan><tspan dy="5.5">​</tspan></text>
+<line x1="138" y1="188" x2="384" y2="188" stroke="var(--rl-policy)" stroke-width="3.2" stroke-linecap="round"/>
+<line x1="384" y1="188" x2="466" y2="188" stroke="var(--rl-policy)" stroke-width="3.0" stroke-dasharray="5 4"/>
+<circle cx="138" cy="188" r="4.5" fill="var(--md-default-bg-color)" stroke="var(--rl-policy)" stroke-width="1.8"/>
+<circle cx="220" cy="188" r="3.5" fill="var(--rl-policy)"/>
+<circle cx="302" cy="188" r="3.5" fill="var(--rl-policy)"/>
+<circle cx="384" cy="188" r="3.5" fill="var(--rl-policy)"/>
+<rect x="461" y="183" width="10" height="10" rx="2" fill="var(--rl-green)"/>
+<text class="rl-sub" x="476" y="192" text-anchor="start">终点</text>
+<text class="rl-math-sm" x="536" y="192" text-anchor="start">× <tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan><tspan dy="-5.5" font-size="13">T−t−1</tspan><tspan dy="5.5">​</tspan></text>
+<path class="rl-deep" d="M 32 212 H 688"/>
+<text class="rl-math" x="32" y="246" text-anchor="start"><tspan font-style="italic">Â</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">GAE(γ,λ)</tspan><tspan dy="5.5">​</tspan> = ∑<tspan dy="3.5" font-size="13">l=0</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">T−t−1</tspan><tspan dy="5.5">​</tspan> (<tspan fill="var(--rl-value)" font-weight="700"><tspan font-style="italic">γ</tspan></tspan><tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan>)<tspan dy="-5.5" font-size="13">l</tspan><tspan dy="5.5">​</tspan> <tspan font-style="italic">δ</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan>，   其中 <tspan font-style="italic">δ</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan> = <tspan font-style="italic">R</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan> + <tspan fill="var(--rl-value)" font-weight="700"><tspan font-style="italic">γ</tspan></tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+l+1</tspan><tspan dy="-3.5">​</tspan>) − <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan>)</text>
+<rect class="rl-band" x="16" y="282" width="336" height="194" rx="14"/>
+<rect x="16" y="282" width="336" height="194" rx="14" fill="none" stroke="var(--rl-policy)" stroke-opacity="0.45" stroke-width="1.5"/>
+<text class="rl-lane-label rl-policy" x="32" y="310" text-anchor="start">控制变量一：<tspan font-style="italic">λ</tspan> ∈ [0, 1]（估计器权衡旋钮）</text>
+<text class="rl-sub" x="32" y="338" text-anchor="start">• 出现位置：仅在外层衰减权重 (γ<tspan fill="var(--rl-policy)" font-weight="700"><tspan font-style="italic">λ</tspan></tspan>)<tspan dy="-5.5" font-size="13">l</tspan><tspan dy="5.5">​</tspan> 中</text>
+<text class="rl-sub" x="32" y="364" text-anchor="start">• 控制对象：真实奖励（橙）与 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> 自举（蓝）比例</text>
+<text class="rl-sub" x="32" y="390" text-anchor="start">• 偏差性质：若 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> = <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan> 完全准确，任意 <tspan font-style="italic">λ</tspan> 均无偏；</text>
+<text class="rl-sub" x="44" y="414" text-anchor="start"><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> 有误差时，调小 <tspan font-style="italic">λ</tspan> 用小偏差换大幅降方差</text>
+<rect x="32" y="430" width="304" height="30" rx="7" fill="var(--rl-policy)" fill-opacity="0.08" stroke="var(--rl-policy)" stroke-opacity="0.4" stroke-width="1.2"/>
+<text class="rl-lane-label rl-policy" x="56" y="450" text-anchor="start"><tspan font-style="italic">λ</tspan> 决定“怎么估优势”（不改回报定义）</text>
+<rect class="rl-band" x="368" y="282" width="336" height="194" rx="14"/>
+<rect x="368" y="282" width="336" height="194" rx="14" fill="none" stroke="var(--rl-value)" stroke-opacity="0.45" stroke-width="1.5"/>
+<text class="rl-lane-label rl-value" x="384" y="310" text-anchor="start">控制变量二：<tspan font-style="italic">γ</tspan> ∈ [0, 1]（未来视野尺度旋钮）</text>
+<text class="rl-sub" x="384" y="338" text-anchor="start">• 出现位置：同时在 (<tspan fill="var(--rl-value)" font-weight="700"><tspan font-style="italic">γ</tspan></tspan>λ)<tspan dy="-5.5" font-size="13">l</tspan><tspan dy="5.5">​</tspan> 与 <tspan font-style="italic">δ</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan> 内部 <tspan fill="var(--rl-value)" font-weight="700"><tspan font-style="italic">γ</tspan></tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> 中</text>
+<text class="rl-sub" x="384" y="364" text-anchor="start">• 控制对象：远期奖励折扣视野（约 1/(1−<tspan font-style="italic">γ</tspan>) 步）</text>
+<text class="rl-sub" x="384" y="390" text-anchor="start">• 偏差性质：即便 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan> = <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan> 完全准确，调小 <tspan font-style="italic">γ</tspan> 也会</text>
+<text class="rl-sub" x="396" y="414" text-anchor="start">压低远期奖励使目标变短视，同时降低方差</text>
+<rect x="384" y="430" width="304" height="30" rx="7" fill="var(--rl-value)" fill-opacity="0.08" stroke="var(--rl-value)" stroke-opacity="0.4" stroke-width="1.2"/>
+<text class="rl-lane-label rl-value" x="408" y="450" text-anchor="start"><tspan font-style="italic">γ</tspan> 决定“优化什么目标”（改变价值定义）</text>
+<rect class="rl-band" x="16" y="490" width="688" height="132" rx="14"/>
+<text class="rl-lane-label rl-green" x="32" y="516" text-anchor="start">固定 <tspan font-style="italic">γ</tspan> 时，调节 <tspan font-style="italic">λ</tspan> ∈ [0, 1] 在一步 TD 与蒙特卡洛 MC 之间的连续过渡：</text>
+<path class="rl-edge" stroke-width="1.6" d="M 226 570 H 254" marker-start="url(#acgae-arrow-rev)" marker-end="url(#acgae-arrow)"/>
+<path class="rl-edge" stroke-width="1.6" d="M 466 570 H 494" marker-start="url(#acgae-arrow-rev)" marker-end="url(#acgae-arrow)"/>
+<g class="rl-node rl-value"><rect x="32" y="532" width="188" height="76" rx="10"/><text class="rl-title" x="126" y="556" text-anchor="middle">λ = 0（一步 TD）</text><text class="rl-sub" x="84" y="578" text-anchor="start">仅保留首项 <tspan font-style="italic">δ</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan></text><text class="rl-sub" x="126" y="598" text-anchor="middle">方差最低 · 偏差最大</text></g>
+<g class="rl-node rl-green"><rect x="260" y="532" width="200" height="76" rx="10"/><text class="rl-title" x="360" y="556" text-anchor="middle">λ ≈ 0.95（GAE 折中）</text><text class="rl-sub" x="302" y="578" text-anchor="start">指数衰减远期 <tspan font-style="italic">δ</tspan><tspan dy="3.5" font-size="13">t+l</tspan><tspan dy="-3.5">​</tspan></text><text class="rl-sub" x="360" y="598" text-anchor="middle">近期低偏 · 远期低方差</text></g>
+<g class="rl-node rl-policy"><rect x="500" y="532" width="188" height="76" rx="10"/><text class="rl-title" x="594" y="556" text-anchor="middle">λ = 1（蒙特卡洛）</text><text class="rl-sub" x="540" y="578" text-anchor="start">还原 <tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> − <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text><text class="rl-sub" x="594" y="598" text-anchor="middle">严格无偏 · 方差最高</text></g>
+</svg>

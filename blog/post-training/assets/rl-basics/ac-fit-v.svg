@@ -1,0 +1,64 @@
+<svg class="rl-roadmap" viewBox="0 0 720 448" role="img" aria-label="Actor-Critic 为什么只需拟合状态价值 V_ϕ(s)：利用贝尔曼期望方程将 Q_π 展开为一步奖励加下一状态价值，从而只需在 rollout 数据上训练状态价值网络 V_ϕ(s) 即可算出优势并更新策略。">
+<defs><marker id="acfv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="16" y="14" width="380" height="420" rx="14"/>
+<text class="rl-lane-label rl-value" x="32" y="44" text-anchor="start">该拟合哪个函数？<tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>、<tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan> 还是 <tspan font-style="italic">A</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>？</text>
+<text class="rl-math" x="32" y="80" text-anchor="start"><tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = 𝔼<tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>[ <tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> ]</text>
+<text class="rl-math" x="32" y="116" text-anchor="start"><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = 𝔼<tspan dy="3.5" font-size="13">a~π</tspan><tspan dy="-3.5">​</tspan>[ <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) ]</text>
+<text class="rl-math" x="32" y="152" text-anchor="start"><tspan font-style="italic">A</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) − <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<path class="rl-deep" d="M 32 176 H 380"/>
+<text class="rl-lane-label rl-green" x="32" y="206" text-anchor="start">利用贝尔曼期望方程把 <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan> 写成 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>：</text>
+<text class="rl-math" x="32" y="242" text-anchor="start"><tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = <tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) + <tspan font-style="italic">γ</tspan> 𝔼[<tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+1</tspan><tspan dy="-3.5">​</tspan>)]</text>
+<text class="rl-sub" x="32" y="274" text-anchor="start">用采到的单步转移样本近似期望，优势函数直接化为：</text>
+<text class="rl-math" x="32" y="310" text-anchor="start"><tspan font-style="italic">A</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) ≈ <tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) + <tspan font-style="italic">γ</tspan><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t+1</tspan><tspan dy="-3.5">​</tspan>) − <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<rect class="rl-callout" x="32" y="338" width="348" height="78" rx="10"/>
+<text class="rl-title" x="206" y="368" text-anchor="middle">结论：只需拟合状态价值 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan>)！</text>
+<text class="rl-sub" x="206" y="394" text-anchor="middle">输入仅依赖状态 s（不依赖动作 a），样本效率更高</text>
+<rect class="rl-band" x="410" y="14" width="294" height="260" rx="14"/>
+<text class="rl-lane-label rl-policy" x="557" y="42" text-anchor="middle">Actor-Critic 三步迭代闭环</text>
+<path class="rl-edge" d="M 480 128 V 104 Q 480 94 490 94 H 558" marker-end="url(#acfv-arrow)"/>
+<path class="rl-edge" d="M 626 126 V 184" marker-end="url(#acfv-arrow)"/>
+<path class="rl-edge" d="M 560 218 H 490 Q 480 218 480 208 V 192" marker-end="url(#acfv-arrow)"/>
+<g class="rl-node rl-policy"><rect x="422" y="128" width="116" height="62" rx="10"/><text class="rl-title" x="480" y="155" text-anchor="middle">采样轨迹</text><text class="rl-sub" x="480" y="176" text-anchor="middle">运行策略 <tspan font-style="italic">π</tspan><tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan></text></g>
+<g class="rl-node rl-green"><rect x="560" y="64" width="132" height="62" rx="10"/><text class="rl-title" x="626" y="91" text-anchor="middle">拟合 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan>)</text><text class="rl-sub" x="626" y="112" text-anchor="middle">贝尔曼算优势 Â</text></g>
+<g class="rl-node rl-value"><rect x="560" y="186" width="132" height="62" rx="10"/><text class="rl-title" x="626" y="213" text-anchor="middle">改进策略</text><text class="rl-sub" x="626" y="234" text-anchor="middle"><tspan font-style="italic">θ</tspan> ← <tspan font-style="italic">θ</tspan> + <tspan font-style="italic">α</tspan>∇<tspan font-style="italic">J</tspan></text></g>
+<rect class="rl-band" x="410" y="288" width="294" height="146" rx="14"/>
+<text class="rl-lane-label rl-green" x="557" y="316" text-anchor="middle">Critic 价值网络（参数 <tspan font-style="italic">ϕ</tspan>）</text>
+<text class="rl-math" x="478" y="380" text-anchor="end"><tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan></text>
+<path class="rl-edge" d="M 482 375 H 494"/>
+<g stroke="currentColor" stroke-opacity="0.28" stroke-width="1.1">
+<line x1="502" y1="342" x2="552" y2="342"/>
+<line x1="502" y1="342" x2="552" y2="364"/>
+<line x1="502" y1="342" x2="552" y2="386"/>
+<line x1="502" y1="342" x2="552" y2="408"/>
+<line x1="502" y1="364" x2="552" y2="342"/>
+<line x1="502" y1="364" x2="552" y2="364"/>
+<line x1="502" y1="364" x2="552" y2="386"/>
+<line x1="502" y1="364" x2="552" y2="408"/>
+<line x1="502" y1="386" x2="552" y2="342"/>
+<line x1="502" y1="386" x2="552" y2="364"/>
+<line x1="502" y1="386" x2="552" y2="386"/>
+<line x1="502" y1="386" x2="552" y2="408"/>
+<line x1="502" y1="408" x2="552" y2="342"/>
+<line x1="502" y1="408" x2="552" y2="364"/>
+<line x1="502" y1="408" x2="552" y2="386"/>
+<line x1="502" y1="408" x2="552" y2="408"/>
+<line x1="552" y1="342" x2="602" y2="375"/>
+<line x1="552" y1="364" x2="602" y2="375"/>
+<line x1="552" y1="386" x2="602" y2="375"/>
+<line x1="552" y1="408" x2="602" y2="375"/>
+</g>
+<g fill="var(--md-default-bg-color)" stroke="var(--rl-value)" stroke-width="1.6">
+<circle cx="502" cy="342" r="5.5"/>
+<circle cx="502" cy="364" r="5.5"/>
+<circle cx="502" cy="386" r="5.5"/>
+<circle cx="502" cy="408" r="5.5"/>
+<circle cx="552" cy="342" r="5.5"/>
+<circle cx="552" cy="364" r="5.5"/>
+<circle cx="552" cy="386" r="5.5"/>
+<circle cx="552" cy="408" r="5.5"/>
+<circle cx="602" cy="375" r="6.5" stroke="var(--rl-green)"/>
+</g>
+<path class="rl-edge" d="M 610 375 H 624" marker-end="url(#acfv-arrow)"/>
+<text class="rl-math" x="630" y="374" text-anchor="start"><tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13" font-style="italic">ϕ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-sub" x="630" y="396" text-anchor="start">≈ <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+</svg>

@@ -1,0 +1,17 @@
+<svg class="rl-roadmap" viewBox="0 0 720 304" role="img" aria-label="强化学习智能体与环境交互闭环：智能体在时刻 t 接收状态 S_t 与奖励 R_t，依据策略输出动作 A_t；环境接收动作后发生状态转移并反馈下一状态 S_{t+1} 与即时奖励 R_{t+1}。">
+<defs><marker id="rl-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="16" y="14" width="688" height="276" rx="14"/>
+<path class="rl-edge" d="M 480 64 H 558 Q 572 64 572 78 V 226 Q 572 240 558 240 H 482" marker-end="url(#rl-loop-arrow)"/>
+<text class="rl-lane-label rl-policy" x="588" y="146" text-anchor="start">动作 <tspan font-style="italic">A</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-edge-label" x="588" y="169" text-anchor="start">作用于环境</text>
+<path class="rl-edge" d="M 240 250 H 138 Q 124 250 124 236 V 66 Q 124 52 138 52 H 238" marker-end="url(#rl-loop-arrow)"/>
+<path class="rl-edge" d="M 240 226 H 200 Q 186 226 186 212 V 90 Q 186 76 200 76 H 238" marker-end="url(#rl-loop-arrow)"/>
+<path class="rl-deep" d="M 102 152 H 294"/>
+<text class="rl-deep-label" x="306" y="157" text-anchor="start">时间步推进 t → t+1</text>
+<text class="rl-edge-label" x="112" y="126" text-anchor="end">当前状态 <tspan font-style="italic">S</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-lane-label rl-value" x="112" y="186" text-anchor="end">下一状态 <tspan font-style="italic">S</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-edge-label" x="200" y="126" text-anchor="start">奖励 <tspan font-style="italic">R</tspan><tspan dy="4.5" font-size="13" font-style="italic">t</tspan><tspan dy="-4.5">​</tspan></text>
+<text class="rl-lane-label rl-value" x="200" y="186" text-anchor="start">即时奖励 <tspan font-style="italic">R</tspan><tspan dy="4.5" font-size="13">t+1</tspan><tspan dy="-4.5">​</tspan></text>
+<g class="rl-node rl-policy"><rect x="240" y="32" width="240" height="64" rx="10"/><text class="rl-title" x="360" y="60" text-anchor="middle">智能体 · Agent</text><text class="rl-sub" x="360" y="81" text-anchor="middle">依据策略 <tspan font-style="italic">π</tspan>(<tspan font-style="italic">a</tspan> | <tspan font-style="italic">s</tspan>) 选择动作</text></g>
+<g class="rl-node rl-value"><rect x="240" y="208" width="240" height="64" rx="10"/><text class="rl-title" x="360" y="236" text-anchor="middle">环境 · Environment</text><text class="rl-sub" x="360" y="257" text-anchor="middle">状态转移 <tspan font-style="italic">P</tspan><tspan dy="4.5" font-size="13">sa</tspan><tspan dy="-4.5">​</tspan> · 奖励函数 <tspan font-style="italic">R</tspan></text></g>
+</svg>

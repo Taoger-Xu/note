@@ -1,0 +1,32 @@
+<svg class="rl-roadmap" viewBox="0 0 720 526" role="img" aria-label="策略梯度闭环与演进路线图：上方为采样轨迹、估计梯度、梯度上升更新参数三步闭环；下方分两条主线，左线通过 REINFORCE 因果性与 Baseline 优势函数解决高方差，右线通过重要性采样与步长约束解决样本仅用一次问题。">
+<defs><marker id="pgr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="18" y="14" width="684" height="168" rx="14"/>
+<text class="rl-lane-label rl-policy" x="360" y="42" text-anchor="middle">朴素策略梯度执行闭环 · Vanilla Policy Gradient</text>
+<path class="rl-edge" d="M 224 90 H 260" marker-end="url(#pgr-arrow)"/>
+<path class="rl-edge" d="M 456 90 H 492" marker-end="url(#pgr-arrow)"/>
+<path class="rl-edge" d="M 590 122 V 140 Q 590 148 580 148 H 140 Q 130 148 130 140 V 124" marker-end="url(#pgr-arrow)"/>
+<text class="rl-lane-label rl-red" x="360" y="170" text-anchor="middle">θ 更新后策略分布改变，旧轨迹随即作废（only used once）</text>
+<g class="rl-node rl-policy"><rect x="34" y="58" width="190" height="64" rx="10"/><text class="rl-title" x="129" y="86" text-anchor="middle">1. 采样轨迹</text><text class="rl-sub" x="129" y="107" text-anchor="middle">按 π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> 采样 N 条 τ<tspan dy="-5" font-size="13">(i)</tspan><tspan dy="5">​</tspan></text></g>
+<g class="rl-node rl-green"><rect x="262" y="58" width="194" height="64" rx="10"/><text class="rl-title" x="359" y="86" text-anchor="middle">2. 估计梯度</text><text class="rl-sub" x="359" y="107" text-anchor="middle">用总回报 G(τ<tspan dy="-5" font-size="13">(i)</tspan><tspan dy="5">​</tspan>) 加权求和</text></g>
+<g class="rl-node rl-value"><rect x="494" y="58" width="192" height="64" rx="10"/><text class="rl-title" x="590" y="86" text-anchor="middle">3. 梯度上升更新</text><text class="rl-sub" x="590" y="107" text-anchor="middle">θ ← θ + α ∇<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan>J(θ)</text></g>
+<path class="rl-edge" d="M 280 182 L 182 204" marker-end="url(#pgr-arrow)"/>
+<path class="rl-edge" d="M 440 182 L 538 204" marker-end="url(#pgr-arrow)"/>
+<rect class="rl-band" x="18" y="206" width="328" height="306" rx="14"/>
+<text class="rl-lane-label rl-policy" x="182" y="236" text-anchor="middle">方向一：缓解梯度不稳定 · 降方差</text>
+<rect class="rl-band" x="374" y="206" width="328" height="306" rx="14"/>
+<text class="rl-lane-label rl-value" x="538" y="236" text-anchor="middle">方向二：提升学习效率 · Off-Policy</text>
+<path class="rl-edge" d="M 182 316 V 364" marker-end="url(#pgr-arrow)"/>
+<text class="rl-edge-label" x="194" y="345" text-anchor="start">减去基线 b(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>) = V(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<path class="rl-edge" d="M 182 428 V 456" marker-end="url(#pgr-arrow)"/>
+<g class="rl-node rl-policy"><rect x="38" y="252" width="288" height="64" rx="10"/><text class="rl-title" x="182" y="280" text-anchor="middle">REINFORCE · 因果性</text><text class="rl-sub" x="182" y="301" text-anchor="middle">剔除历史奖励，仅用未来回报 G<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan></text></g>
+<g class="rl-node rl-policy"><rect x="38" y="364" width="288" height="64" rx="10"/><text class="rl-title" x="182" y="392" text-anchor="middle">Baseline 与优势函数</text><text class="rl-sub" x="182" y="413" text-anchor="middle">权重化为 A(s<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>, a<tspan dy="3.5" font-size="13">t</tspan><tspan dy="-3.5">​</tspan>) = Q − V</text></g>
+<rect class="rl-deep" x="38" y="458" width="288" height="40" rx="10"/>
+<text class="rl-deep-label" x="182" y="483" text-anchor="middle">下一节：Actor-Critic（用 TD 低方差估 A）</text>
+<path class="rl-edge" d="M 538 316 V 364" marker-end="url(#pgr-arrow)"/>
+<text class="rl-edge-label" x="550" y="345" text-anchor="start">限制新旧策略偏离幅度</text>
+<path class="rl-edge" d="M 538 428 V 456" marker-end="url(#pgr-arrow)"/>
+<g class="rl-node rl-value"><rect x="394" y="252" width="288" height="64" rx="10"/><text class="rl-title" x="538" y="280" text-anchor="middle">重要性采样 · Off-Policy</text><text class="rl-sub" x="538" y="301" text-anchor="middle">乘概率比 π<tspan dy="3.5" font-size="13">θ</tspan><tspan dy="-3.5">​</tspan> / π<tspan dy="3.5" font-size="13">θ_old</tspan><tspan dy="-3.5">​</tspan> 复用旧轨迹</text></g>
+<g class="rl-node rl-value"><rect x="394" y="364" width="288" height="64" rx="10"/><text class="rl-title" x="538" y="392" text-anchor="middle">信任域步长约束</text><text class="rl-sub" x="538" y="413" text-anchor="middle">防止重要性权重剧烈波动导致崩溃</text></g>
+<rect class="rl-deep" x="394" y="458" width="288" height="40" rx="10"/>
+<text class="rl-deep-label" x="538" y="483" text-anchor="middle">后续章节：TRPO（KL 约束）与 PPO（Clip）</text>
+</svg>

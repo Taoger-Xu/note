@@ -1,0 +1,40 @@
+<svg class="rl-roadmap" viewBox="0 0 720 670" role="img" aria-label="强化学习路线图：基于价值的路线从 MDP 经动态规划、MC/TD、SARSA/Q-learning 到 DQN；基于策略的路线从策略梯度经 REINFORCE、Actor-Critic、TRPO 到 PPO；Actor-Critic 的 Critic 借用了 TD。">
+<defs><marker id="rl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker></defs>
+<rect class="rl-band" x="20" y="16" width="260" height="642" rx="14"/>
+<text class="rl-lane-label rl-value" x="150.0" y="50" text-anchor="middle">基于价值 · Value-based</text>
+<rect class="rl-band" x="440" y="16" width="260" height="642" rx="14"/>
+<text class="rl-lane-label rl-policy" x="570.0" y="50" text-anchor="middle">基于策略 · Policy-based</text>
+<rect class="rl-deep" x="10" y="552" width="700" height="104" rx="12"/>
+<text class="rl-deep-label" x="360.0" y="600.0" text-anchor="middle">深度 RL</text>
+<text class="rl-deep-label" x="360.0" y="618.0" text-anchor="middle">函数近似</text>
+<path class="rl-edge" d="M150.0 140 V194" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="162.0" y="172.0" text-anchor="start">模型已知：迭代求解</text>
+<path class="rl-edge" d="M150.0 260 V314" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="162.0" y="292.0" text-anchor="start">去掉模型，改用采样</text>
+<path class="rl-edge" d="M150.0 380 V434" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="162.0" y="412.0" text-anchor="start">估计 Q，贪心改进策略</text>
+<path class="rl-edge" d="M150.0 500 V550" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="162.0" y="530.0" text-anchor="start">Q 表换成神经网络</text>
+<path class="rl-edge" d="M570.0 140 V194" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="582.0" y="172.0" text-anchor="start">用采样估计梯度</text>
+<path class="rl-edge" d="M570.0 260 V314" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="582.0" y="292.0" text-anchor="start">加入 Critic 降方差</text>
+<path class="rl-edge" d="M570.0 380 V434" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="582.0" y="412.0" text-anchor="start">限制每次更新的步长</text>
+<path class="rl-edge" d="M570.0 500 V550" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="582.0" y="530.0" text-anchor="start">KL 约束换成 clip</text>
+<path class="rl-edge" d="M260 108.0 H458" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="360.0" y="99.0" text-anchor="middle">不学价值，直接学策略</text>
+<path class="rl-edge rl-borrow" d="M260 348.0 H458" marker-end="url(#rl-arrow)"/>
+<text class="rl-edge-label" x="360.0" y="339.0" text-anchor="middle">Critic 用 TD 学 V</text>
+<g class="rl-node rl-value"><rect x="40" y="76" width="220" height="64" rx="10"/><text class="rl-title" x="150.0" y="104" text-anchor="middle">MDP</text><text class="rl-sub" x="150.0" y="125" text-anchor="middle">⟨S, A, P, R, γ⟩ · 贝尔曼方程</text></g>
+<g class="rl-node rl-value"><rect x="40" y="196" width="220" height="64" rx="10"/><text class="rl-title" x="150.0" y="224" text-anchor="middle">动态规划</text><text class="rl-sub" x="150.0" y="245" text-anchor="middle">策略迭代 · 价值迭代</text></g>
+<g class="rl-node rl-value"><rect x="40" y="316" width="220" height="64" rx="10"/><text class="rl-title" x="150.0" y="344" text-anchor="middle">MC / TD</text><text class="rl-sub" x="150.0" y="365" text-anchor="middle">完整回报 / 自举一步</text></g>
+<g class="rl-node rl-value"><rect x="40" y="436" width="220" height="64" rx="10"/><text class="rl-title" x="150.0" y="464" text-anchor="middle">SARSA / Q-learning</text><text class="rl-sub" x="150.0" y="485" text-anchor="middle">on-policy / off-policy</text></g>
+<g class="rl-node rl-value"><rect x="40" y="572" width="220" height="64" rx="10"/><text class="rl-title" x="150.0" y="600" text-anchor="middle">DQN</text><text class="rl-sub" x="150.0" y="621" text-anchor="middle">经验回放 · 目标网络</text></g>
+<g class="rl-node rl-policy"><rect x="460" y="76" width="220" height="64" rx="10"/><text class="rl-title" x="570.0" y="104" text-anchor="middle">策略梯度</text><text class="rl-sub" x="570.0" y="125" text-anchor="middle">直接优化 J(θ)</text></g>
+<g class="rl-node rl-policy"><rect x="460" y="196" width="220" height="64" rx="10"/><text class="rl-title" x="570.0" y="224" text-anchor="middle">REINFORCE</text><text class="rl-sub" x="570.0" y="245" text-anchor="middle">MC 回报估计梯度 · 高方差</text></g>
+<g class="rl-node rl-policy"><rect x="460" y="316" width="220" height="64" rx="10"/><text class="rl-title" x="570.0" y="344" text-anchor="middle">Actor-Critic</text><text class="rl-sub" x="570.0" y="365" text-anchor="middle">Actor 选动作 · Critic 估计 V</text></g>
+<g class="rl-node rl-policy"><rect x="460" y="436" width="220" height="64" rx="10"/><text class="rl-title" x="570.0" y="464" text-anchor="middle">TRPO</text><text class="rl-sub" x="570.0" y="485" text-anchor="middle">KL ≤ δ 的信任域</text></g>
+<g class="rl-node rl-policy"><rect x="460" y="572" width="220" height="64" rx="10"/><text class="rl-title" x="570.0" y="600" text-anchor="middle">PPO</text><text class="rl-sub" x="570.0" y="621" text-anchor="middle">clip(r, 1 − ε, 1 + ε)</text></g>
+</svg>

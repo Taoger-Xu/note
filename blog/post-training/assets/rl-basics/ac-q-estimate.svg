@@ -1,0 +1,49 @@
+<svg class="rl-roadmap" viewBox="0 0 720 436" role="img" aria-label="从单次采样回报到价值函数估计：右上展示从 (s_t, a_t) 出发的随机未来轨迹扇形分支，REINFORCE 仅累加单条红线分支 G_t^(i)，而 Actor-Critic 用价值函数拟合整片扇面的期望价值与优势 A_{π_θ}(s_t, a_t)。">
+<defs>
+<marker id="ac-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path class="rl-arrowhead" d="M0 1 L9 5 L0 9 Z"/></marker>
+<marker id="ac-red-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path fill="var(--rl-red)" d="M0 1 L9 5 L0 9 Z"/></marker>
+</defs>
+<rect class="rl-band" x="16" y="14" width="442" height="248" rx="14"/>
+<text class="rl-lane-label rl-policy" x="30" y="42" text-anchor="start">单次采样回报（随机变量的单个样本，高方差）</text>
+<text class="rl-math" x="30" y="90" text-anchor="start">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) ≈</text>
+<text class="rl-math-sm" x="118" y="77" text-anchor="middle">1</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 106 84 H 130"/>
+<text class="rl-math-sm" x="118" y="101" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="148.0" y="92.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="148.0" y="108.0" text-anchor="middle"><tspan font-style="italic">i</tspan>=1</text>
+<text class="rl-math-sm" x="148.0" y="68.0" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="188.0" y="92.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="188.0" y="108.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="188.0" y="68.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="208" y="90" text-anchor="start">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan> log <tspan font-style="italic">π</tspan><tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>) · <tspan fill="var(--rl-red)"><tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan></tspan></text>
+<text class="rl-sub" x="30" y="144" text-anchor="start">其中 <tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan> = ∑<tspan dy="3.5" font-size="13">t′=t</tspan><tspan dy="-3.5">​</tspan> <tspan font-style="italic">R</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13">t′</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13">t′</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>) 只是单条未来分支的采样值</text>
+<rect class="rl-callout" x="30" y="178" width="414" height="62" rx="10"/>
+<text class="rl-sub" x="237" y="203" text-anchor="middle"><tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> 本身是随机变量，单条轨迹采样波动很大</text>
+<text class="rl-lane-label rl-value" x="237" y="227" text-anchor="middle">能否直接估计它在所有未来分支上的期望？</text>
+<rect class="rl-band" x="472" y="14" width="232" height="248" rx="14"/>
+<text class="rl-lane-label rl-value" x="588" y="42" text-anchor="middle">未来轨迹的随机分支扇面</text>
+<path class="rl-edge" stroke-width="2.2" d="M 490 202 C 508 198, 506 180, 528 166"/>
+<path class="rl-edge" stroke-width="1.7" d="M 528 166 C 518 132, 536 100, 548 62" marker-end="url(#ac-arrow)"/>
+<path class="rl-edge" stroke-width="1.7" d="M 528 166 C 534 130, 558 100, 576 58" marker-end="url(#ac-arrow)"/>
+<path class="rl-edge" stroke-width="1.7" d="M 528 166 C 550 134, 580 104, 606 62" marker-end="url(#ac-arrow)"/>
+<path class="rl-edge" stroke-width="1.7" d="M 528 166 C 566 138, 602 110, 636 68" marker-end="url(#ac-arrow)"/>
+<path fill="none" stroke="var(--rl-red)" stroke-width="2.4" d="M 528 166 C 584 146, 628 122, 668 82" marker-end="url(#ac-red-arrow)"/>
+<circle cx="528" cy="166" r="7.5" fill="var(--rl-green)" stroke="var(--md-default-bg-color)" stroke-width="2"/>
+<text class="rl-lane-label rl-green" x="532" y="192" text-anchor="middle">(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<text class="rl-lane-label rl-red" x="588" y="224" text-anchor="middle">红线：单次采样 <tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan></text>
+<text class="rl-sub" x="588" y="246" text-anchor="middle">整片扇面期望：真实 <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>)</text>
+<rect class="rl-band" x="16" y="276" width="688" height="146" rx="14"/>
+<text class="rl-lane-label rl-green" x="34" y="304" text-anchor="start">Actor-Critic：用价值函数拟合真实期望，取代单次采样</text>
+<text class="rl-sub" x="34" y="332" text-anchor="start">真实期望 <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = 𝔼<tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>[ <tspan font-style="italic">G</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan> ]，减去基线 <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) 即得确定性的优势函数 <tspan font-style="italic">A</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan>) = <tspan font-style="italic">Q</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan> − <tspan font-style="italic">V</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>：</text>
+<text class="rl-math" x="118" y="388" text-anchor="start">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan><tspan font-style="italic">J</tspan>(<tspan font-style="italic">θ</tspan>) ≈</text>
+<text class="rl-math-sm" x="210" y="375" text-anchor="middle">1</text>
+<path class="rl-brace" stroke-opacity="0.85" d="M 198 382 H 222"/>
+<text class="rl-math-sm" x="210" y="399" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="242.0" y="390.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="242.0" y="406.0" text-anchor="middle"><tspan font-style="italic">i</tspan>=1</text>
+<text class="rl-math-sm" x="242.0" y="366.0" text-anchor="middle"><tspan font-style="italic">N</tspan></text>
+<text class="rl-math-op" x="284.0" y="390.0" text-anchor="middle">∑</text>
+<text class="rl-math-sm" x="284.0" y="406.0" text-anchor="middle"><tspan font-style="italic">t</tspan>=0</text>
+<text class="rl-math-sm" x="284.0" y="366.0" text-anchor="middle"><tspan font-style="italic">T</tspan>−1</text>
+<text class="rl-math" x="306" y="388" text-anchor="start">∇<tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan> log <tspan font-style="italic">π</tspan><tspan dy="3.5" font-size="13" font-style="italic">θ</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan> | <tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>) · <tspan fill="var(--rl-green)"><tspan font-style="italic">A</tspan><tspan dy="3.5" font-size="13">π</tspan><tspan dy="-3.5">​</tspan>(<tspan font-style="italic">s</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>, <tspan font-style="italic">a</tspan><tspan dy="3.5" font-size="13" font-style="italic">t</tspan><tspan dy="-3.5">​</tspan><tspan dy="-5.5" font-size="13">(i)</tspan><tspan dy="5.5">​</tspan>)</tspan></text>
+</svg>
