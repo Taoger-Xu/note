@@ -369,41 +369,39 @@ $$
 
 ### 从单次随机采样到价值函数拟合
 
-回到上一节带 baseline 的策略梯度：在实际采样出一条轨迹后，如果还像 REINFORCE 那样用单条轨迹算出的 $G_t^{(i)} - V(s_t^{(i)})$ 当作优势估计，方差其实依然很大。从随机变量的视角看原因很直接——从 $(s_t, a_t)$ 往后走，由于策略采样和环境转移都是随机的，未来会展开成一整片扇形的可能轨迹，未来回报 $G_t$（以及基于单样本算出的优势）本身是一个随机变量。REINFORCE 每次只沿着实际发生的那一条分支把奖励加起来，碰上运气好或运气差的分支，数值就会剧烈跳动。
-
-我们真正需要的不是单条分支的随机样本 $G_t^{(i)}$，而是它在整片未来分支扇面上的真实期望 $Q_{\pi_\theta}(s_t, a_t) = \mathbb{E}_{\pi_\theta}[G_t \mid s_t, a_t]$，进而得到确定性的优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
+即使是带 baseline 版本的 REINFORCE，用单条轨迹算出的 $G_t^{(i)} - V(s_t^{(i)})$ 对优势做无偏估计，方差依然很大。从随机变量的视角看原因很直接——从 $(s_t, a_t)$ 往后走，由于策略采样和环境转移都是随机的，未来会展开成一整片扇形的可能轨迹，未来回报 $G_t$（以及基于单样本算出的优势）本身是一个随机变量；实际上我们需要的是它在整片扇面上的真实期望 $Q_{\pi_\theta}(s_t, a_t) = \mathbb{E}_{\pi_\theta}[G_t \mid s_t, a_t]$，进而得到确定性的优势函数 $A_{\pi_\theta}(s_t, a_t) = Q_{\pi_\theta}(s_t, a_t) - V_{\pi_\theta}(s_t)$：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-q-estimate.svg"
 <figcaption>REINFORCE 只沿单条采样分支（红线）累加回报，而 Actor-Critic 用价值函数拟合整片扇面的期望价值，从而给出低方差的优势估计。</figcaption>
 </figure>
 
-Actor-Critic 的本质就是专门引入一个参数化的价值网络（Critic）去拟合期望价值，用来更准、更低方差地估计 $A_{\pi_\theta}(s_t, a_t)$：Actor（策略网络 $\pi_\theta$）负责与环境交互选动作并按优势更新策略，Critic（价值网络 $V_\phi$）负责评估价值给 Actor 提供低方差信号。
+所以 Actor-Critic 的本质就是专门引入一个参数化的价值网络（Critic）去拟合期望价值，用来更准、更低方差地估计 $A_{\pi_\theta}(s_t, a_t)$：Actor（策略网络 $\pi_\theta$）负责与环境交互选动作并按优势更新策略，Critic（价值网络 $V_\phi$）负责评估价值给 Actor 提供低方差信号。
+
+明确了核心目的是得到更好的优势估计后，接下来自然需要解决两个问题：一是面对 $Q_\pi$、$V_\pi$ 和 $A_\pi$，该考虑用神经网络去拟合哪一个；二是如何获取训练数据去拟合它。
 
 ### 拟合 $V_\phi(s)$ 并由贝尔曼方程算优势
 
-式子里同时出现了 $Q_\pi$、$V_\pi$ 和 $A_\pi$，究竟该用神经网络去拟合哪一个？利用贝尔曼期望方程 $Q_\pi(s_t, a_t) = R(s_t, a_t) + \gamma\,\mathbb{E}_{s_{t+1}}[V_\pi(s_{t+1})]$，在已经采集到的真实单步转移 $(s_t, a_t, R(s_t,a_t), s_{t+1})$ 上用样本近似期望，$Q_\pi$ 就可以直接用 $V_\pi$ 表示出来。因此最常见的 Actor-Critic 方法**只用 rollout 数据去拟合一个仅依赖状态的网络 $V_\phi(s) \approx V_\pi(s)$**（不依赖动作 $a$，输入空间更小、样本效率更高），再结合采样轨迹算出优势估计，构成“采样轨迹 → 拟合 $V_\phi(s)$ → 改进策略”的闭环：
+先看拟合哪一个。根据贝尔曼期望方程 $Q_\pi(s_t, a_t) = R(s_t, a_t) + \gamma\,\mathbb{E}_{s_{t+1}}[V_\pi(s_{t+1})]$，在采到的单步转移 $(s_t, a_t, R(s_t,a_t), s_{t+1})$ 上用样本近似期望，$Q_\pi$ 就能直接由 $V_\pi$ 表示出来。因此直接用神经网络拟合状态价值 $V_\pi(s)$（记为 $V_\phi(s)$）是最常见的做法——输入只依赖状态 $s$ 而不依赖动作 $a$，空间更小、样本效率更高，由此构成“采样轨迹 → 拟合 $V_\phi(s)$ → 改进策略”的闭环：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-fit-v.svg"
 <figcaption>利用贝尔曼方程消去 Q_π 后，Actor-Critic 只需训练状态价值网络 V_ϕ(s)，即可算出优势并完成三步迭代闭环。</figcaption>
 </figure>
 
-在网络结构设计上（尤其是放到大模型场景中），价值网络 $V_\phi(s_t)$ 通常有两种搭法：
+在网络结构上（尤其是大模型场景），价值网络 $V_\phi(s_t)$ 通常有两种搭法：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-arch.svg"
 <figcaption>Critic 价值网络的两种常见结构：独立价值网络（左）与共享策略主干外接线性价值头（右）。</figcaption>
 </figure>
 
-- **独立价值网络（Separate Value Network）**：Critic 拥有一套完全独立的骨干网络与输出层，价值损失训练整套参数 $\phi$。优点是价值梯度不会干扰策略网络的表征，训练更稳（如 InstructGPT / 标准 RLHF PPO）；缺点是必须额外维护一整个与策略同规模的模型做 Critic，显存与算力开销几乎翻倍（这也正是后面 GRPO 设法去掉 Critic 的核心动因）。
-- **共享策略主干 + 价值头（Value Head on Policy Body）**：直接复用策略网络 $\pi_\theta$ 的主干隐藏表示，只在顶层加一个轻量级的线性价值头 $\phi$，并通常用 `stop-gradient` 截断回传到主干的价值梯度，仅更新线性头 $\phi$（如 MIXER）。这种做法显存开销极小，但 Critic 的拟合能力会受限于策略主干已有的特征。
+- **独立价值网络（Separate Value Network）**：Critic 拥有一套完全独立的骨干网络与输出层，价值损失训练整套参数 $\phi$。价值梯度不会干扰策略网络的表征，训练更稳（如 InstructGPT / 标准 RLHF PPO），但需要额外维护一整个同规模模型，显存与算力开销几乎翻倍（也是后面 GRPO 去掉 Critic 的主要动因）。
+- **共享策略主干 + 价值头（Value Head on Policy Body）**：复用策略网络 $\pi_\theta$ 的主干隐藏表示，只在顶层加一个线性价值头 $\phi$，并用 `stop-gradient` 截断回传到主干的价值梯度，仅更新线性头 $\phi$（如 MIXER）。显存开销极小，但拟合能力受限于策略主干已有的特征。
 
 ### 如何利用收集的数据拟合 $V_\pi(s)$
 
-接下来的问题是：拿到策略 $\pi_\theta$ 交互采集的一批轨迹 $\{\tau^{(i)}\}_{i=1}^N$ 后，具体怎么训练参数 $\phi$ 让 $V_\phi(s_t)$ 逼近真实的 $V_\pi(s_t)$？
-
-做法很直接——把它转化为标准的**监督回归问题**：给每个采样状态 $s_t^{(i)}$ 构造一个目标标签 $y_t^{(i)}$（将 $y_t^{(i)}$ 视为固定常数，不回传梯度），最小化均方误差损失 $\mathcal{L}(\phi) = \frac{1}{2}\sum_{i=1}^{N}\sum_{t=0}^{T-1}\big(V_\phi(s_t^{(i)}) - y_t^{(i)}\big)^2$。围绕如何构造回归标签 $y_t^{(i)}$，同样对应蒙特卡洛（MC）和时序差分（TD）两条路线：
+再看如何用交互采集的轨迹 $\{\tau^{(i)}\}_{i=1}^N$ 去拟合 $V_\pi(s_t)$。这本质上是一个监督回归问题：给每个采样状态 $s_t^{(i)}$ 构造回归目标 $y_t^{(i)}$（视为固定标签，不回传梯度），最小化均方误差损失 $\mathcal{L}(\phi) = \frac{1}{2}\sum_{i=1}^{N}\sum_{t=0}^{T-1}\big(V_\phi(s_t^{(i)}) - y_t^{(i)}\big)^2$。围绕标签 $y_t^{(i)}$ 的构造，对应 MC 和 TD 两条路线：
 
 <figure class="rl-roadmap-figure">
 --8<-- "docs/blog/posts/post-training/assets/rl-basics/ac-mc-vs-td.svg"
@@ -450,10 +448,10 @@ $$
 <figcaption>广义优势估计 GAE(γ, λ) 图解：上方为多步优势按 (1−λ)λ^{k−1} 指数加权的展开结构，中间对比两个控制变量 λ 与 γ 的职责差异，下方为 λ 从 0（一步 TD）到 1（MC）的连续过渡光谱。</figcaption>
 </figure>
 
-初学者看到外层的 $(\gamma\lambda)^l$ 很容易疑惑：既然 $\gamma$ 和 $\lambda$ 乘在一起都在衰减远期项，为什么还需要两个独立的控制变量？关键在于 $\delta_{t+l} = R_{t+l} + \gamma V_\phi(s_{t+l+1}) - V_\phi(s_{t+l})$ **内部只含 $\gamma$ 而不含 $\lambda$**，两者的职责完全不同：
+式子外层虽然把两个参数乘在一起写成了 $(\gamma\lambda)^l$，但 $\delta_{t+l} = R_{t+l} + \gamma V_\phi(s_{t+l+1}) - V_\phi(s_{t+l})$ 内部只含 $\gamma$ 而不含 $\lambda$，两者控制的其实是不同层面的东西：
 
-- **$\lambda \in [0, 1]$ 控制“怎么估计优势”（自举与采样的权衡旋钮）**：$\lambda$ 只出现在外层多步混合权重中，不改变回报和价值函数本身的定义。如果 Critic 已经完全学准（$V_\phi = V_\pi$），那么对**任意** $\lambda \in [0, 1]$，GAE 都是严格无偏的；当 $V_\phi$ 存在误差时，调节 $\lambda$ 就是在 $\lambda = 0$（一步 TD $\delta_t$，完全信 $V_\phi$ 自举，方差最低但偏差最大）与 $\lambda = 1$（MC 优势 $G_t - V_\phi(s_t)$，完全信真实采样，严格无偏但方差最高）之间平滑折中。
-- **$\gamma \in [0, 1]$ 控制“优化什么目标”（未来奖励的视野尺度旋钮）**：$\gamma$ 同时出现在外层衰减和内层 $\delta_{t+l}$ 的 $\gamma V_\phi(s_{t+l+1})$ 中，直接决定了价值函数向后看多远的未来奖励（有效视野约为 $\frac{1}{1-\gamma}$ 步）。**哪怕 $V_\phi = V_\pi$ 毫无误差**，相对于无折扣真实目标而言，调小 $\gamma$ 也会压低远期奖励的权重（使策略变短视）而引入偏差，换来远期方差的下降（例如在只有句末奖励的 LLM 任务中通常设 $\gamma = 1$，主要靠 $\lambda < 1$ 控制方差）。
+- **$\lambda \in [0, 1]$ 控制优势怎么估（采样与自举的权衡）**：$\lambda$ 只出现在外层多步混合权重里，不改变回报和价值本身的定义。若 $V_\phi = V_\pi$ 完全准确，对任意 $\lambda \in [0, 1]$ 估计都是无偏的；当 $V_\phi$ 有误差时，$\lambda$ 负责在 $\lambda = 0$（一步 TD $\delta_t$，完全靠 $V_\phi$ 自举，方差最低但偏差最大）与 $\lambda = 1$（MC 优势 $G_t - V_\phi(s_t)$，完全信真实采样，无偏但方差最高）之间权衡偏差与方差。
+- **$\gamma \in [0, 1]$ 控制优化目标的视野尺度**：$\gamma$ 同时出现在外层衰减和内层 $\delta_{t+l}$ 的 $\gamma V_\phi(s_{t+l+1})$ 中，决定价值函数往后看多远的未来奖励（有效视野约 $\frac{1}{1-\gamma}$ 步）。哪怕 $V_\phi = V_\pi$ 完全准确，调小 $\gamma$ 也会压低远期奖励的权重（使策略变短视），改变的是优化目标本身（例如只有句末奖励的 LLM 任务通常固定 $\gamma = 1$，靠 $\lambda < 1$ 来压方差）。
 
 实践中（如 PPO）通常取 $\lambda \approx 0.95$，让近期步多信真实奖励以压低偏差、远期步多靠 $V_\phi$ 截断噪声。代码实现时只需从轨迹末尾往前按 $\hat{A}_t^{\text{GAE}} = \delta_t + \gamma\lambda\,\hat{A}_{t+1}^{\text{GAE}}$ 做一趟 $O(T)$ 逆序递推即可算出所有步的优势，同时还可以直接取 $y_t = \hat{A}_t^{\text{GAE}} + V_{\phi_{\text{old}}}(s_t)$ 作为回训 Critic $V_\phi$ 的回归目标。
 
